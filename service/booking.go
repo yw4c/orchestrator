@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/rotisserie/eris"
 	"orchestrator/facade"
 	"orchestrator/pb"
@@ -19,11 +18,11 @@ type BookingService struct {
 
 func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingRequest) (resp *pb.BookingSyncResponse, err error) {
 
+	// 從 metadata 取得 request-id
 	requestID, err := helper.GetRequestID(ctx)
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
-	fmt.Println(requestID)
 
 	// 從 facade 取得註冊的事務流程
 	flow := orchestrator.GetInstance().GetFlow(facade.SyncBooking)
@@ -31,7 +30,6 @@ func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingReq
 		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
-
 
 	// 執行事務流程
 	response, err := flow.Run(requestID, req)

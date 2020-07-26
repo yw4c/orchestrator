@@ -9,6 +9,7 @@ import (
 
 // 同步的事務流程
 type ISyncFlow interface {
+	// 將䩞點依序加入
 	Use(syncHandler SyncHandler) ISyncFlow
 	IFlow
 }
