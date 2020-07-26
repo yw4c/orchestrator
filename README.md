@@ -14,6 +14,11 @@
   - [Examples](#examples)
     - [範例 Booking 流程](#範例-booking-流程)
     - [同步事務流程](#同步事務流程)
+        - [實現事務節點](#實現事務節點)
+        - [實現 rollback 事件](#實現-rollback-事件)
+        - [註冊事務流程](#註冊事務流程)
+        - [調用事務流程](#同步事務流程)
+        - [測試事務流程](#測試事務流程)
     - [異步事務流程](#異步事務流程)
     
     
@@ -41,7 +46,7 @@
 
 ### 同步事務流程
 
-#### 1. 撰寫事務節點(handler)
+#### 實現事務節點
 * 第一個節點從 Context 中取得 gRPC request DTO 
 * 後面以 gRPC response DTO 在 context 中遞送
     
@@ -85,8 +90,15 @@ func CreateOrderSync() orchestrator.SyncHandler {
 
 ```
 
+#### 實現 rollback 事件
 
-* 撰寫 rollback handler, 這是異步節點
+* 以異步節點方式註冊一 topic
+```
+CancelBooking orchestrator.Topic = "CancelBooking"
+```
+* 請參考 ```./topic/booking.go```
+
+* 撰寫 rollback handler
 ```
 func CancelBooking() orchestrator.AsyncHandler {
     return func(topic orchestrator.Topic, data []byte) {
@@ -102,7 +114,7 @@ func CancelBooking() orchestrator.AsyncHandler {
 * 請參考 ```./hancler/booking.go```
     
 
-#### 1. 註冊事務流程
+#### 註冊事務流程
 * 在程式 start up 時進行註冊
 * 流程需有一異步的 rollback handler
     
@@ -128,32 +140,35 @@ func CancelBooking() orchestrator.AsyncHandler {
     
 * 請參考 ```./facade/booking.go```
 
-#### 1. 調用事務流程
-    * 提供 helper.GetRequestID() 從 metadata 取得 request ID
-    * 在請求協程中調用 Run()
+#### 調用事務流程
+* 提供 helper.GetRequestID() 從 metadata 取得 request ID
+* 在請求協程中調用 Run() 開始執行事務
     
-    ```
-	// 從 metadata 取得 request-id
-	requestID, err := helper.GetRequestID(ctx)
-	if err != nil {
-		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-	}
+```
+// 從 metadata 取得 request-id
+requestID, err := helper.GetRequestID(ctx)
+if err != nil {
+    return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+}
 
-	// 從 facade 取得註冊的事務流程
-	flow := orchestrator.GetInstance().GetFlow(facade.SyncBooking)
-	if flow == nil {
-		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
-		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-	}
+// 從 facade 取得註冊的事務流程
+flow := orchestrator.GetInstance().GetFlow(facade.SyncBooking)
+if flow == nil {
+    err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
+    return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+}
 
-	// 執行事務流程
-	response, err := flow.Run(requestID, req)
-	if err != nil {
-		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-	}
-    ```
+// 執行事務流程
+response, err := flow.Run(requestID, req)
+if err != nil {
+    return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+}
+```
 
-#### 1. 測試事務流程
+* 請參考 ```./service/booking.go```
+
+
+#### 測試事務流程
 * Happy Ending
 ````
 grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleSyncBooking
