@@ -1,0 +1,43 @@
+syntax = "proto3";
+package pb;
+
+
+service BookingService {
+
+  // 表頭(Metadata)需要請求編號
+  // x-request-id
+
+  // 同步的 Booking 請求
+  rpc HandleSyncBooking (BookingRequest) returns (BookingSyncResponse);
+  // 異步的 Booking 請求
+  rpc HandleAsyncBooking (BookingRequest) returns (BookingASyncResponse);
+}
+
+
+message BookingRequest{
+  // 產品ID
+  int64 ProductID = 1;
+  // 數量
+  int64 Count = 2;
+  // 注入錯誤: 測試 Rollback
+  bool FaultInject = 3;
+}
+
+message BookingSyncResponse{
+  // 請求編號
+  string RequestID = 1;
+  // 產品ID
+  int64 OrderID = 2;
+  // 付款ID
+  int64 PaymentID =3;
+  // 注入錯誤: 測試 Rollback
+  bool FaultInject = 4;
+}
+
+
+message BookingASyncResponse{
+  // 請求編號
+  string RequestID = 1;
+  // 注入錯誤: 測試 Rollback
+  bool FaultInject = 2;
+}
