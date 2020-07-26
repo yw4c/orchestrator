@@ -1,5 +1,6 @@
 # Orchestrator Framework of Saga pattern
 * Orchestrator 在微服務中，負責集中處理分散事務流程，
+* 流程支援同步/異步
 * 實現框架接口，可以輕易註冊，擴展分散事務流程。
 * 以 gRPC 作為服務入口。
 * 可抽換 Message Queue ，目前支援 RabbitMQ
@@ -89,6 +90,7 @@ func CreateOrderSync() orchestrator.SyncHandler {
 }
 
 ```
+* 請參考 [handler](./handler/booking.go)
 
 #### 實現 rollback 事件
 
@@ -96,7 +98,8 @@ func CreateOrderSync() orchestrator.SyncHandler {
 ```
 CancelBooking orchestrator.Topic = "CancelBooking"
 ```
-* 請參考 ```./topic/booking.go```
+
+* 請參考 [topic](./topic/booking.go)
 
 * 撰寫 rollback handler
 ```
@@ -111,7 +114,7 @@ func CancelBooking() orchestrator.AsyncHandler {
 }
 ```
 
-* 請參考 [handler](./handler/booking.go)
+
     
 
 #### 註冊事務流程
@@ -138,7 +141,8 @@ func CancelBooking() orchestrator.AsyncHandler {
    }
 ```
     
-* 請參考 ```./facade/booking.go```
+
+* 請參考 [facade](./facade/booking.go)
 
 #### 調用事務流程
 * 提供 helper.GetRequestID() 從 metadata 取得 request ID
@@ -165,8 +169,7 @@ if err != nil {
 }
 ```
 
-* 請參考 ```./service/booking.go```
-
+* 請參考 [service](./service/booking.go)
 
 #### 測試事務流程
 * Happy Ending
