@@ -111,7 +111,7 @@ func CancelBooking() orchestrator.AsyncHandler {
 }
 ```
 
-* 請參考 [a relative link](./hancler/booking.go)
+* 請參考 [handler](./handler/booking.go)
     
 
 #### 註冊事務流程
