@@ -3,7 +3,9 @@ package orchestrator
 import (
 	"encoding/json"
 	"github.com/rotisserie/eris"
+	"github.com/rs/zerolog/log"
 	"orchestrator/pkg/pkgerror"
+	"runtime/debug"
 )
 
 // 異步的事務流程
@@ -19,13 +21,20 @@ type IAsyncFlow interface {
 }
 
 // 異步的事務節點
-type AsyncHandler func(topic Topic, data []byte)
-// 取消所有 Flow 事務
-//type RollbackHandler func(topic Topic, data []byte)
+type AsyncHandler func(topic Topic, data []byte, next Next)
+// 異步事務，進行下一個事務節點
+type Next func(context IAsyncFlowMsg)
+// Rollback的事務節點
+type RollbackHandler func(topic Topic, data []byte)
+
 // 一個 Topic 對應 一個 事務節點
 type TopicHandlerPair struct {
 	Topic        Topic
 	AsyncHandler AsyncHandler
+}
+type TopicRollbackHandlerPair struct {
+	Topic        Topic
+	Handler RollbackHandler
 }
 
 
@@ -41,8 +50,8 @@ type AsyncFlow struct {
 	rollbackTopic Topic
 }
 
-func (s *AsyncFlow) ConsumeRollback(rollback *TopicHandlerPair) {
-	GetMQInstance().ListenAndConsume(rollback.Topic, rollback.AsyncHandler)
+func (s *AsyncFlow) ConsumeRollback(rollback *TopicRollbackHandlerPair) {
+	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Handler)
 	s.rollbackTopic = rollback.Topic
 }
 
@@ -93,5 +102,28 @@ func NewAsyncFlow(rollbackTopic Topic) *AsyncFlow {
 	return &AsyncFlow{
 		handlers: nil,
 		rollbackTopic:rollbackTopic,
+	}
+}
+
+
+func GetNextFunc() Next{
+	return func(d IAsyncFlowMsg) {
+
+		var nextTopic Topic
+
+		// has next？有的話 produce 下一個 topic
+		if len(d.GetTopics())-1 > d.GetCurrentIndex() {
+
+			nextTopic = d.GetTopics()[d.GetCurrentIndex()+1]
+			d.SetCurrentIndex(d.GetCurrentIndex()+1)
+			nextData, err := json.Marshal(d)
+			if err != nil {
+				log.Error().Str("track", string(debug.Stack())).
+					Interface("context", d).
+					Msg("GetNextFunc Error")
+				return
+			}
+			GetMQInstance().Produce(nextTopic, nextData)
+		}
 	}
 }

@@ -19,7 +19,7 @@ type Facade string
 
 type IFlow interface {
 	// 開始準備接收 MQ 訊息
-	ConsumeRollback(rollback *TopicHandlerPair)
+	ConsumeRollback(rollback *TopicRollbackHandlerPair)
 }
 
 // Singleton

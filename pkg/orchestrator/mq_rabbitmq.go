@@ -35,6 +35,7 @@ type RabbitMQ struct {
 }
 
 
+
 func (r *RabbitMQ) Produce(topic Topic, message []byte) {
 	ch, err := r.conn.Channel()
 	if err != nil {
@@ -149,7 +150,7 @@ func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
 				Str("body", string(d.Body)).
 				Msg("Consumer Access Log")
 
-			handler(topic, d.Body)
+			handler(topic, d.Body, GetNextFunc())
 
 			d.Ack(false)
 		}
@@ -159,3 +160,94 @@ func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
 
 }
 
+func (r *RabbitMQ) ConsumeRollback(topic Topic, handler RollbackHandler) {
+
+	// channels 復用一 Connection 連線, channel 對應一 consumer
+	channel, err := r.conn.Channel()
+	if err != nil {
+		panic(err.Error())
+	}
+
+
+
+	// 使用 direct 一對一接收
+	err = channel.ExchangeDeclare(
+		string(topic+"_exchange"),   // name
+		"direct", // type
+		false,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+
+
+	// Queue
+	q, err := channel.QueueDeclare(
+		string(topic+"_queue"),    // name
+		true, // durable
+		false, // delete when unused
+		true,  // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+
+
+	// Bindings
+	err = channel.QueueBind(
+		q.Name, // queue name, 这里指的是 test_logs
+		string(topic),     // routing key
+		string(topic+"_exchange"), // exchange
+		false,
+		nil)
+	if err != nil {
+		panic(err.Error())
+	}
+
+
+	// register consumer
+	msgs, err := channel.Consume(
+		q.Name, // queue
+		string(topic+"_consumer"),     // consumer
+		false,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	go func(msgs <-chan amqp.Delivery, handler RollbackHandler) {
+
+		// Panic recover
+		defer func() {
+			if p := recover(); p != nil {
+				log.Error().Interface("message", p).Str("trace", string(debug.Stack())).Msg("Consumer Panic Recover")
+			}
+			defer r.conn.Close()
+			defer channel.Close()
+		}()
+
+		// 處理訊息
+		for d := range msgs {
+			log.Info().
+				Str("topic", string(topic)).
+				Str("body", string(d.Body)).
+				Msg("Consumer Access Log")
+
+			handler(topic, d.Body)
+
+			d.Ack(false)
+		}
+	}(msgs, handler)
+
+
+}

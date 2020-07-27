@@ -5,6 +5,11 @@ type IAsyncFlowMsg interface {
 	SetCurrentIndex(currentIndex int)
 	SetTopics(topics []Topic)
 	SetRollbackTopic(topic Topic)
+
+	GetRequestID()string
+	GetCurrentIndex()int
+	GetTopics()[]Topic
+	GetRollbackTopic()Topic
 }
 
 // Rollback 的推播格式
@@ -21,6 +26,22 @@ type AsyncFlowMsg struct {
 	CurrentIndex int `json:"current_index"`
 	// 流程中所有 topic (依序)
 	Topics []Topic `json:"topics"`
+}
+
+func (a *AsyncFlowMsg) GetRequestID() string {
+	return a.RequestID
+}
+
+func (a *AsyncFlowMsg) GetCurrentIndex() int {
+	return a.CurrentIndex
+}
+
+func (a *AsyncFlowMsg) GetTopics() []Topic {
+	return a.Topics
+}
+
+func (a *AsyncFlowMsg) GetRollbackTopic() Topic {
+	return a.RollbackTopic
 }
 
 func (a *AsyncFlowMsg) SetRollbackTopic(topic Topic) {

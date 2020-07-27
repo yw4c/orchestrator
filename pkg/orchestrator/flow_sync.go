@@ -25,8 +25,8 @@ type SyncFlow struct {
 	rollbackTopic Topic
 }
 
-func (s *SyncFlow) ConsumeRollback(rollback *TopicHandlerPair) {
-	GetMQInstance().ListenAndConsume(rollback.Topic, rollback.AsyncHandler)
+func (s *SyncFlow) ConsumeRollback(rollback *TopicRollbackHandlerPair) {
+	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Handler)
 	s.rollbackTopic = rollback.Topic
 }
 

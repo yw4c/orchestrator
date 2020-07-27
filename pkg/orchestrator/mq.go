@@ -10,6 +10,7 @@ type Topic string
 type MQ interface {
 	Produce(topic Topic, message []byte)
 	ListenAndConsume(topic Topic, handler AsyncHandler)
+	ConsumeRollback(topic Topic, handler RollbackHandler)
 }
 
 var mq MQ

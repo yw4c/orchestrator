@@ -46,9 +46,9 @@ func RegisterSyncBookingFlow() {
 		Use(handler.CreatePaymentSync())
 
 	// 開始監聽 rollback Topic
-	rollbackPair := &orchestrator.TopicHandlerPair{
+	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
 		Topic:        topic.CancelBooking,
-		AsyncHandler: handler.CancelBooking(),
+		Handler: handler.CancelBooking(),
 	}
 	flow.ConsumeRollback(rollbackPair)
 

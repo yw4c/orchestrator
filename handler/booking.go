@@ -31,7 +31,7 @@ type BookingMsgDTO struct {
 
 // 建立訂單-異步的事務節點
 func CreateOrderAsync() orchestrator.AsyncHandler {
-	return func(topic orchestrator.Topic, data []byte) {
+	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next) {
 
 		// Convert Message into struct
 		d := &BookingMsgDTO{}
@@ -53,25 +53,7 @@ func CreateOrderAsync() orchestrator.AsyncHandler {
 		var mockOrderID int64 = 11
 		d.OrderID = mockOrderID
 
-
-		// has next？有的話 produce 下一個 topic
-		var nextTopic orchestrator.Topic
-		if len(d.Topics)-1 > d.CurrentIndex {
-
-			nextTopic = orchestrator.Topic(d.Topics[d.CurrentIndex+1])
-			log.Info().Str("next topic", string(nextTopic)).Msg("MQ NEXT")
-			d.CurrentIndex += 1
-			nextData, err := json.Marshal(d)
-			if err != nil {
-				log.Error().Str("track", string(debug.Stack())).
-					Str("error", "Can not get request in first handler").
-					Str("requestID", d.RequestID).
-					Msg("CreateOrderAsync Error")
-				return
-			}
-			orchestrator.GetMQInstance().Produce(nextTopic, nextData)
-		}
-
+		next(d)
 
 		log.Info().Msg("CreateOrderAsync finished")
 	}
@@ -79,7 +61,7 @@ func CreateOrderAsync() orchestrator.AsyncHandler {
 
 // 建立付款-異步的事務節點
 func CreatePaymentAsync() orchestrator.AsyncHandler {
-	return func(topic orchestrator.Topic, data []byte) {
+	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next) {
 
 		// Convert Message into struct
 		d := &BookingMsgDTO{}
@@ -107,24 +89,10 @@ func CreatePaymentAsync() orchestrator.AsyncHandler {
 			msg := &orchestrator.RollbackMsg{RequestID:d.RequestID}
 			b, _ := json.Marshal(msg)
 			orchestrator.GetMQInstance().Produce(d.RollbackTopic, b)
+			return
 		}
 
-		// has next？有的話 produce 下一個 topic
-		var nextTopic orchestrator.Topic
-		if len(d.Topics)-1 > d.CurrentIndex {
-			nextTopic = d.Topics[d.CurrentIndex+1]
-			d.CurrentIndex += 1
-			nextData, err := json.Marshal(d)
-			if err != nil {
-				log.Error().Str("track", string(debug.Stack())).
-					Str("error", "Can not get request in first handler").
-					Str("requestID", d.RequestID).
-					Msg("CreatePaymentAsync Error")
-				return
-			}
-			orchestrator.GetMQInstance().Produce(nextTopic, nextData)
-		}
-
+		next(d)
 
 		log.Info().Interface("DTO", d).Msg("CreatePaymentAsync finished")
 	}
@@ -208,7 +176,7 @@ func CreatePaymentSync() orchestrator.SyncHandler {
 *  Rollback 事務節點
 ************************************************************/
 
-func CancelBooking() orchestrator.AsyncHandler {
+func CancelBooking() orchestrator.RollbackHandler {
 	return func(topic orchestrator.Topic, data []byte) {
 		log.Info().
 			Str("topic", string(topic)).
