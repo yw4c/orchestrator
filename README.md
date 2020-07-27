@@ -1,7 +1,7 @@
 # Orchestrator Framework of Saga pattern
-* Orchestrator 在微服務中，負責集中處理分散事務流程，
-* 流程支援同步/異步
-* 實現框架接口，可以輕易註冊，擴展分散事務流程。
+* Orchestrator 在微服務中，負責集中處理分散事務流程。
+* 流程支援同步/異步。
+* 實現框架接口，可以輕易註冊、擴展分散事務流程。
 * 以 gRPC 作為服務入口。
 * 可抽換 Message Queue ，目前支援 RabbitMQ
 
@@ -105,6 +105,7 @@ CancelBooking orchestrator.Topic = "CancelBooking"
 ```
 func CancelBooking() orchestrator.AsyncHandler {
     return func(topic orchestrator.Topic, data []byte) {
+        
         log.Info().
             Str("topic", string(topic)).
             Str("Message", string(data)).
@@ -113,7 +114,7 @@ func CancelBooking() orchestrator.AsyncHandler {
     }
 }
 ```
-
+* 請參考 [handler](./handler/booking.go)
 
     
 
@@ -122,23 +123,23 @@ func CancelBooking() orchestrator.AsyncHandler {
 * 流程需有一異步的 rollback handler
     
 ```
-    // 註冊同步的 Booking 事務流程
-   func RegisterSyncBookingFlow() {
-    // 建立流程，依序加入節點
-    flow := orchestrator.NewSyncFlow()
-    flow.Use(handler.CreateOrderSync()).
-        Use(handler.CreatePaymentSync())
-   
-    // 開始監聽 rollback Topic
-    rollbackPair := &orchestrator.TopicHandlerPair{
-        Topic:        topic.CancelBooking,
-        AsyncHandler: handler.CancelBooking(),
-    }
-    flow.ConsumeRollback(rollbackPair)
-   
-    // 註冊流程
-    orchestrator.GetInstance().SetFlows(SyncBooking, flow)
-   }
+// 註冊同步的 Booking 事務流程
+func RegisterSyncBookingFlow() {
+	// 建立流程
+	flow := orchestrator.NewSyncFlow()
+	flow.Use(handler.CreateOrderSync()).
+		Use(handler.CreatePaymentSync())
+
+	// 開始監聽 rollback Topic
+	rollbackPair := &orchestrator.TopicHandlerPair{
+		Topic:        topic.CancelBooking,
+		AsyncHandler: handler.CancelBooking(),
+	}
+	flow.ConsumeRollback(rollbackPair)
+
+	// 註冊流程
+	orchestrator.GetInstance().SetFlows(SyncBooking, flow)
+}
 ```
     
 

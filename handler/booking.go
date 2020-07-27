@@ -8,6 +8,7 @@ import (
 	"orchestrator/pkg/ctx"
 	"orchestrator/pkg/orchestrator"
 	"orchestrator/pkg/pkgerror"
+	"runtime/debug"
 )
 
 /***********************************************************
@@ -15,47 +16,117 @@ import (
 ************************************************************/
 
 // Booking 異步流程的推播訊息格式
-type ExampleBookingMsg struct {
-	orchestrator.AsyncFlowMsg
-	OrderID int
-	PaymentID int
+type BookingMsgDTO struct {
+
+	//**** 請求參數 ****//
+	FaultInject bool
+	ProductID   int64 `json:"product_id"`
+
+	//**** 傳遞資料 ****//
+	OrderID int64 `json:"order_id"`
+	PaymentID int64 `json:"payment_id"`
+
+	*orchestrator.AsyncFlowMsg
 }
 
 // 建立訂單-異步的事務節點
 func CreateOrderAsync() orchestrator.AsyncHandler {
 	return func(topic orchestrator.Topic, data []byte) {
-		d := &orchestrator.AsyncFlowMsg{}
+
+		// Convert Message into struct
+		d := &BookingMsgDTO{}
+
 		if err := json.Unmarshal(data, d); err != nil {
-			//log.Println("CreateOrderAsync: ","json Unmarshal fail", err.Error(), string(debug.Stack()))
+			log.Error().Str("track", string(debug.Stack())).
+				Str("error", "Unmarshal fail").
+				Str("requestID", d.RequestID).
+				Msg("CreateOrderAsync Error")
+			return
 		}
+		log.Info().
+			Interface("DTO", d).
+			Msg("CreateOrderAsync DTO received")
 
-		// do something
 
 
-		// has next
+		// 模擬建立訂單業務邏輯
+		var mockOrderID int64 = 11
+		d.OrderID = mockOrderID
+
+
+		// has next？有的話 produce 下一個 topic
 		var nextTopic orchestrator.Topic
-		if len(d.Topics)-1 >= d.CurrentIndex {
+		if len(d.Topics)-1 > d.CurrentIndex {
+
 			nextTopic = orchestrator.Topic(d.Topics[d.CurrentIndex+1])
+			log.Info().Str("next topic", string(nextTopic)).Msg("MQ NEXT")
 			d.CurrentIndex += 1
 			nextData, err := json.Marshal(d)
 			if err != nil {
-				//log.Println("CreateOrderAsync: ","Marshal fail", string(debug.Stack()))
+				log.Error().Str("track", string(debug.Stack())).
+					Str("error", "Can not get request in first handler").
+					Str("requestID", d.RequestID).
+					Msg("CreateOrderAsync Error")
+				return
 			}
 			orchestrator.GetMQInstance().Produce(nextTopic, nextData)
 		}
 
-		//log.Println(
-		//	"handling topic:", topic,
-		//	"data:", string(data),
-		//	"next:", nextTopic,
-		//)
+
+		log.Info().Msg("CreateOrderAsync finished")
 	}
 }
 
 // 建立付款-異步的事務節點
 func CreatePaymentAsync() orchestrator.AsyncHandler {
 	return func(topic orchestrator.Topic, data []byte) {
-		//log.Println("topic", topic, "data", string(data))
+
+		// Convert Message into struct
+		d := &BookingMsgDTO{}
+
+		if err := json.Unmarshal(data, d); err != nil {
+			log.Error().Str("track", string(debug.Stack())).
+				Str("error", "Unmarshal fail").
+				Str("requestID", d.RequestID).
+				Msg("CreatePaymentAsync Error")
+			return
+		}
+
+		log.Info().
+			Interface("DTO", d).
+			Msg("CreatePaymentAsync DTO received")
+
+
+		// 模擬建立訂單業務邏輯
+		var mockPaymentID int64 = 12
+		d.PaymentID = mockPaymentID
+
+		// 故障注入
+		if d.FaultInject {
+			log.Debug().Str("topic", string(d.RollbackTopic)).Msg("fault infect")
+			msg := &orchestrator.RollbackMsg{RequestID:d.RequestID}
+			b, _ := json.Marshal(msg)
+			orchestrator.GetMQInstance().Produce(d.RollbackTopic, b)
+		}
+
+		// has next？有的話 produce 下一個 topic
+		var nextTopic orchestrator.Topic
+		if len(d.Topics)-1 > d.CurrentIndex {
+			nextTopic = d.Topics[d.CurrentIndex+1]
+			d.CurrentIndex += 1
+			nextData, err := json.Marshal(d)
+			if err != nil {
+				log.Error().Str("track", string(debug.Stack())).
+					Str("error", "Can not get request in first handler").
+					Str("requestID", d.RequestID).
+					Msg("CreatePaymentAsync Error")
+				return
+			}
+			orchestrator.GetMQInstance().Produce(nextTopic, nextData)
+		}
+
+
+		log.Info().Interface("DTO", d).Msg("CreatePaymentAsync finished")
 	}
 }
 

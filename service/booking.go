@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/rotisserie/eris"
 	"orchestrator/facade"
+	"orchestrator/handler"
 	"orchestrator/pb"
 	"orchestrator/pkg/helper"
 	"orchestrator/pkg/orchestrator"
@@ -25,7 +26,7 @@ func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingReq
 	}
 
 	// 從 facade 取得註冊的事務流程
-	flow := orchestrator.GetInstance().GetFlow(facade.SyncBooking)
+	flow := orchestrator.GetInstance().GetSyncFlow(facade.SyncBooking)
 	if flow == nil {
 		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
@@ -47,6 +48,34 @@ func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingReq
 
 }
 
-func (b BookingService) HandleAsyncBooking(context.Context, *pb.BookingRequest) (*pb.BookingASyncResponse, error) {
-	panic("implement me")
+func (b BookingService) HandleAsyncBooking(ctx context.Context,req *pb.BookingRequest) (*pb.BookingASyncResponse, error) {
+	// 從 metadata 取得 request-id
+	requestID, err := helper.GetRequestID(ctx)
+	if err != nil {
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
+
+	// 從 facade 取得註冊的事務流程
+	flow := orchestrator.GetInstance().GetAsyncFlow(facade.AsyncBooking)
+	if flow == nil {
+		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
+
+	reqMsg := handler.BookingMsgDTO{
+		FaultInject: req.FaultInject,
+		ProductID:   req.ProductID,
+		AsyncFlowMsg: &orchestrator.AsyncFlowMsg{},
+	}
+
+
+	// 執行事務流程
+	err = flow.Run(requestID, reqMsg)
+	if err != nil {
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
+	return &pb.BookingASyncResponse{
+		RequestID:            requestID,
+		FaultInject:          false,
+	}, err
 }

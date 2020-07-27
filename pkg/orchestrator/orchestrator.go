@@ -7,18 +7,17 @@ import (
 // 協調者
 type IOrchestrator interface {
 	// 註冊事務流程
-	SetFlows(facade Facade,flow IFlow)
+	SetSyncFlows(facade Facade, flow ISyncFlow)
+	SetAsyncFlows(facade Facade, flow IAsyncFlow)
 	// 用 facade 領取事務流程
-	GetFlow(facade Facade) IFlow
-
+	GetSyncFlow(facade Facade) ISyncFlow
+	GetAsyncFlow(facade Facade) IAsyncFlow
 }
 
 // 用 facade 領取事務流程
 type Facade string
 
 type IFlow interface {
-	// 執行事務流程
-	Run(requestID string, requestParam interface{}) (response interface{}, err error)
 	// 開始準備接收 MQ 訊息
 	ConsumeRollback(rollback *TopicHandlerPair)
 }
@@ -29,7 +28,8 @@ var once sync.Once
 func GetInstance() IOrchestrator {
 	once.Do(func() {
 		c:= &Orchestrator{
-			registeredFlows: make(map[Facade]IFlow),
+			registeredSyncFlows: make(map[Facade]ISyncFlow),
+			registeredAsyncFlows: make(map[Facade]IAsyncFlow),
 		}
 		instance = c
 	})
@@ -38,23 +38,35 @@ func GetInstance() IOrchestrator {
 
 
 type Orchestrator struct {
-	registeredFlows  map[Facade]IFlow
-	syncFlowMu           sync.RWMutex
+	registeredSyncFlows map[Facade]ISyncFlow
+	syncFlowMu          sync.RWMutex
+	registeredAsyncFlows map[Facade]IAsyncFlow
+	asyncFlowMu          sync.RWMutex
 }
 
-func (o *Orchestrator) SetFlows(facade Facade,flow IFlow) {
-	o.syncFlowMu.Lock()
-	if sf, ok := flow.(IFlow);ok {
-		o.registeredFlows[facade] = sf
-	}
+func (o *Orchestrator) SetAsyncFlows(facade Facade, flow IAsyncFlow) {
+	o.asyncFlowMu.Lock()
+	o.registeredAsyncFlows[facade] = flow
+	o.asyncFlowMu.Unlock()
+}
 
+func (o *Orchestrator) GetAsyncFlow(facade Facade) IAsyncFlow {
+	if flow, ok := o.registeredAsyncFlows[facade] ; ok {
+		return flow
+	}
+	return nil
+}
+
+func (o *Orchestrator) SetSyncFlows(facade Facade, flow ISyncFlow) {
+	o.syncFlowMu.Lock()
+	o.registeredSyncFlows[facade] = flow
 	o.syncFlowMu.Unlock()
 }
 
-func (o *Orchestrator) GetFlow(facade Facade) IFlow{
-	if flow, ok := o.registeredFlows[facade] ; ok {
+func (o *Orchestrator) GetSyncFlow(facade Facade) ISyncFlow {
+	if flow, ok := o.registeredSyncFlows[facade] ; ok {
 		return flow
 	}
-	panic("no such flow : "+facade)
+	return nil
 }
 

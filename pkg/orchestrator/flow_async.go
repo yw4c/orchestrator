@@ -2,6 +2,8 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"github.com/rotisserie/eris"
+	"orchestrator/pkg/pkgerror"
 )
 
 // 異步的事務流程
@@ -10,6 +12,9 @@ type IAsyncFlow interface {
 	Use(TopicHandlerPair TopicHandlerPair) IAsyncFlow
 	// 開始準備接收 MQ 訊息
 	Consume()
+	// 執行事務流程
+	Run(requestID string, requestParam IAsyncFlowMsg) (err error)
+
 	IFlow
 }
 
@@ -24,25 +29,9 @@ type TopicHandlerPair struct {
 }
 
 
-// Rollback 的推播格式
-type baseMsg struct {
-	requestID string `json:"request_id"`
-}
-// 異步流程的推播格式
-type AsyncFlowMsg struct {
-	// 流程名稱
-	Facade string `json:"facade"`
-	// 請求編號
-	RequestID string `json:"request_id"`
-	// 當前節點索引 Topics，用於找到下個節點推播
-	CurrentIndex int `json:"current_index"`
-	// 流程中所有 topic (依序)
-	Topics []string `json:"topics"`
-}
-
 // 推送 rollback Topic 給 mq
 func rollback(topic Topic, requestID string) {
-	msg, _ := json.Marshal(&baseMsg{requestID: requestID})
+	msg, _ := json.Marshal(&RollbackMsg{RequestID: requestID})
 	GetMQInstance().Produce(topic, msg)
 }
 
@@ -53,7 +42,8 @@ type AsyncFlow struct {
 }
 
 func (s *AsyncFlow) ConsumeRollback(rollback *TopicHandlerPair) {
-	panic("implement me")
+	GetMQInstance().ListenAndConsume(rollback.Topic, rollback.AsyncHandler)
+	s.rollbackTopic = rollback.Topic
 }
 
 func (s *AsyncFlow) Consume() {
@@ -71,27 +61,32 @@ func (s *AsyncFlow) Use(TopicHandlerPair TopicHandlerPair) IAsyncFlow {
 	return s
 }
 
-func (s *AsyncFlow) Run(requestID string, requestParam interface{}) (response interface{}, err error) {
+func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowMsg) (err error){
 	if len(s.handlers) == 0 {
 		return
 	}
 
 	// 蒐集 topics
-	var topics []string
+	var topics []Topic
 	for _, v := range s.handlers {
-		topics = append(topics, string(v.Topic))
+		topics = append(topics, v.Topic)
 	}
 
 	// 準備 msg 給第一個事務
-	data, _ := json.Marshal(&AsyncFlowMsg{
-		RequestID:requestID,
-		CurrentIndex:0,
-		Topics: topics,
-	})
+	requestParam.SetCurrentIndex(0)
+	requestParam.SetRequestID(requestID)
+	requestParam.SetTopics(topics)
+	requestParam.SetRollbackTopic(s.rollbackTopic)
+
+
+	data, err := json.Marshal(requestParam)
+	if err != nil {
+		return  eris.Wrap(pkgerror.ErrInternalError, "Json Marshal Fail")
+	}
 
 	// 開始推播給第一個事務
 	GetMQInstance().Produce(s.handlers[0].Topic, data)
-	return  requestID, nil
+	return    nil
 }
 
 func NewAsyncFlow(rollbackTopic Topic) *AsyncFlow {

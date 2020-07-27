@@ -34,7 +34,7 @@ func RegisterAsyncBookingFlows() {
 	flow.Consume()
 
 	// 註冊流程
-	orchestrator.GetInstance().SetFlows(AsyncBooking, flow)
+	orchestrator.GetInstance().SetAsyncFlows(AsyncBooking, flow)
 
 }
 
@@ -53,5 +53,5 @@ func RegisterSyncBookingFlow() {
 	flow.ConsumeRollback(rollbackPair)
 
 	// 註冊流程
-	orchestrator.GetInstance().SetFlows(SyncBooking, flow)
+	orchestrator.GetInstance().SetSyncFlows(SyncBooking, flow)
 }

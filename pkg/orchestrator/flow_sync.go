@@ -11,6 +11,8 @@ import (
 type ISyncFlow interface {
 	// 將䩞點依序加入
 	Use(syncHandler SyncHandler) ISyncFlow
+	// 執行事務流程
+	Run(requestID string, requestParam interface{}) (response interface{}, err error)
 	IFlow
 }
 

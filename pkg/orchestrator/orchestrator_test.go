@@ -29,13 +29,13 @@ func init()  {
 
 	flow := NewSyncFlow( Topic("666"))
 	flow.Use(handlerA).Use(handlerB)
-	orchestrator.SetFlows(Facade("foo"), flow)
+	orchestrator.SetSyncFlows(Facade("foo"), flow)
 }
 
 func Test_Sync(t *testing.T) {
 
 	orchestrator := GetInstance()
-	flow := orchestrator.GetFlow(Facade("foo"))
+	flow := orchestrator.GetSyncFlow(Facade("foo"))
 	flow.Run("666")
 
 }

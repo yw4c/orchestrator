@@ -42,6 +42,11 @@ func (r *RabbitMQ) Produce(topic Topic, message []byte) {
 	}
 	defer ch.Close()
 
+	if topic == "" {
+		panic("topic can not be empty")
+	}
+
+	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
 	err = ch.Publish(
 		string(topic+"_exchange"),     // exchange
@@ -145,6 +150,7 @@ func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
 				Msg("Consumer Access Log")
 
 			handler(topic, d.Body)
+
 			d.Ack(false)
 		}
 	}(msgs, handler)
