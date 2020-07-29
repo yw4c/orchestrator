@@ -13,7 +13,7 @@ type IAsyncFlow interface {
 	// 開始準備接收 MQ 訊息
 	Consume()
 	// 執行事務流程
-	Run(requestID string, requestParam IAsyncFlowMsg) (err error)
+	Run(requestID string, requestParam IAsyncFlowContext) (err error)
 
 	IFlow
 }
@@ -61,7 +61,7 @@ func (s *AsyncFlow) Use(TopicHandlerPair TopicHandlerPair) IAsyncFlow {
 	return s
 }
 
-func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowMsg) (err error){
+func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowContext) (err error){
 	if len(s.handlers) == 0 {
 		return
 	}

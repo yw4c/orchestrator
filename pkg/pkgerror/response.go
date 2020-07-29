@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-var format = eris.NewDefaultStringFormat(eris.FormatOptions{
+var Format = eris.NewDefaultStringFormat(eris.FormatOptions{
 	InvertOutput: true, // flag that inverts the error output (wrap errors shown first)
 	WithTrace: true,    // flag that enables stack trace output
 	InvertTrace: true,  // flag that inverts the stack trace output (top of call stack shown first)
@@ -17,7 +17,7 @@ var format = eris.NewDefaultStringFormat(eris.FormatOptions{
 func SetGRPCErrorResp(requestID string, err error) error {
 
 	// log tracked errors
-	formattedStr := eris.ToCustomString(err, format)
+	formattedStr := eris.ToCustomString(err, Format)
 
 	log.Error().
 		Str("track", formattedStr).

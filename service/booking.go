@@ -63,9 +63,9 @@ func (b BookingService) HandleAsyncBooking(ctx context.Context,req *pb.BookingRe
 	}
 
 	reqMsg := handler.BookingMsgDTO{
-		FaultInject: req.FaultInject,
-		ProductID:   req.ProductID,
-		AsyncFlowMsg: &orchestrator.AsyncFlowMsg{},
+		FaultInject:      req.FaultInject,
+		ProductID:        req.ProductID,
+		AsyncFlowContext: &orchestrator.AsyncFlowContext{},
 	}
 
 

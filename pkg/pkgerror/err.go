@@ -22,7 +22,7 @@ var (
 	ErrNotMatchSetting       = &_error{Code: "400087", Message: "The specified data not match setting, please adjust your inputs.", Status: http.StatusBadRequest, GRPCCode: codes.InvalidArgument}
 
 	ErrUnauthorized                = &_error{Code: "401001", Message: http.StatusText(http.StatusUnauthorized), Status: http.StatusUnauthorized, GRPCCode: codes.Unauthenticated}
-	ErrInvalidAuthenticationInfo   = &_error{Code: "401001", Message: "The authentication information was not provided in the correct format. Verify the value of Authorization header.", Status: http.StatusUnauthorized, GRPCCode: codes.Unauthenticated}
+	ErrInvalidAuthenticationInfo   = &_error{Code: "401001", Message: "The authentication information was not provided in the correct Format. Verify the value of Authorization header.", Status: http.StatusUnauthorized, GRPCCode: codes.Unauthenticated}
 	ErrInvalidSign                 = &_error{Code: "401001", Message: "Invaild sign", Status: http.StatusUnauthorized, GRPCCode: codes.Unauthenticated}
 	ErrUsernameOrPasswordIncorrect = &_error{Code: "401002", Message: "Username or Password is incorrect.", Status: http.StatusUnauthorized, GRPCCode: codes.Unauthenticated}
 

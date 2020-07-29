@@ -8,7 +8,6 @@ import (
 	"orchestrator/pkg/ctx"
 	"orchestrator/pkg/orchestrator"
 	"orchestrator/pkg/pkgerror"
-	"runtime/debug"
 )
 
 /***********************************************************
@@ -26,7 +25,7 @@ type BookingMsgDTO struct {
 	OrderID int64 `json:"order_id"`
 	PaymentID int64 `json:"payment_id"`
 
-	*orchestrator.AsyncFlowMsg
+	*orchestrator.AsyncFlowContext
 }
 
 // 建立訂單-異步的事務節點
@@ -37,10 +36,7 @@ func CreateOrderAsync() orchestrator.AsyncHandler {
 		d := &BookingMsgDTO{}
 
 		if err := json.Unmarshal(data, d); err != nil {
-			log.Error().Str("track", string(debug.Stack())).
-				Str("error", "Unmarshal fail").
-				Str("requestID", d.RequestID).
-				Msg("CreateOrderAsync Error")
+			d.Rollback(eris.Wrap(pkgerror.ErrInternalError, err.Error()))
 			return
 		}
 		log.Info().
@@ -54,23 +50,7 @@ func CreateOrderAsync() orchestrator.AsyncHandler {
 		d.OrderID = mockOrderID
 
 
-		// has next？有的話 produce 下一個 topic
-		var nextTopic orchestrator.Topic
-		if len(d.Topics)-1 > d.CurrentIndex {
-
-			nextTopic = orchestrator.Topic(d.Topics[d.CurrentIndex+1])
-			log.Info().Str("next topic", string(nextTopic)).Msg("MQ NEXT")
-			d.CurrentIndex += 1
-			nextData, err := json.Marshal(d)
-			if err != nil {
-				log.Error().Str("track", string(debug.Stack())).
-					Str("error", "Can not get request in first handler").
-					Str("requestID", d.RequestID).
-					Msg("CreateOrderAsync Error")
-				return
-			}
-			orchestrator.GetMQInstance().Produce(nextTopic, nextData)
-		}
+		d.Next()
 
 
 		log.Info().Msg("CreateOrderAsync finished")
@@ -85,17 +65,9 @@ func CreatePaymentAsync() orchestrator.AsyncHandler {
 		d := &BookingMsgDTO{}
 
 		if err := json.Unmarshal(data, d); err != nil {
-			log.Error().Str("track", string(debug.Stack())).
-				Str("error", "Unmarshal fail").
-				Str("requestID", d.RequestID).
-				Msg("CreatePaymentAsync Error")
+			d.Rollback(eris.Wrap(pkgerror.ErrInternalError, err.Error()))
 			return
 		}
-
-		log.Info().
-			Interface("DTO", d).
-			Msg("CreatePaymentAsync DTO received")
-
 
 		// 模擬建立訂單業務邏輯
 		var mockPaymentID int64 = 12
@@ -103,28 +75,11 @@ func CreatePaymentAsync() orchestrator.AsyncHandler {
 
 		// 故障注入
 		if d.FaultInject {
-			log.Debug().Str("topic", string(d.RollbackTopic)).Msg("fault infect")
-			msg := &orchestrator.RollbackMsg{RequestID:d.RequestID}
-			b, _ := json.Marshal(msg)
-			orchestrator.GetMQInstance().Produce(d.RollbackTopic, b)
+			d.Rollback(eris.Wrap(pkgerror.ErrInvalidInput, "this is a mocked error"))
+			return
 		}
 
-		// has next？有的話 produce 下一個 topic
-		var nextTopic orchestrator.Topic
-		if len(d.Topics)-1 > d.CurrentIndex {
-			nextTopic = d.Topics[d.CurrentIndex+1]
-			d.CurrentIndex += 1
-			nextData, err := json.Marshal(d)
-			if err != nil {
-				log.Error().Str("track", string(debug.Stack())).
-					Str("error", "Can not get request in first handler").
-					Str("requestID", d.RequestID).
-					Msg("CreatePaymentAsync Error")
-				return
-			}
-			orchestrator.GetMQInstance().Produce(nextTopic, nextData)
-		}
-
+		d.Next()
 
 		log.Info().Interface("DTO", d).Msg("CreatePaymentAsync finished")
 	}
