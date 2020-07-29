@@ -25,7 +25,7 @@ type BookingMsgDTO struct {
 	OrderID int64 `json:"order_id"`
 	PaymentID int64 `json:"payment_id"`
 
-	*orchestrator.AsyncFlowMsg
+	*orchestrator.AsyncFlowContext
 }
 
 // 建立訂單-異步的事務節點

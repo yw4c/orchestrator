@@ -1,6 +1,6 @@
 package orchestrator
 
-type IAsyncFlowMsg interface {
+type IAsyncFlowContext interface {
 	SetRequestID(requestID string)
 	SetCurrentIndex(currentIndex int)
 	SetTopics(topics []Topic)
@@ -17,7 +17,7 @@ type RollbackMsg struct {
 	RequestID string `json:"request_id"`
 }
 // 異步流程的推播格式
-type AsyncFlowMsg struct {
+type AsyncFlowContext struct {
 	// rollback topic
 	RollbackTopic Topic `json:"rollback_topic"`
 	// 請求編號
@@ -28,34 +28,34 @@ type AsyncFlowMsg struct {
 	Topics []Topic `json:"topics"`
 }
 
-func (a *AsyncFlowMsg) GetRequestID() string {
+func (a *AsyncFlowContext) GetRequestID() string {
 	return a.RequestID
 }
 
-func (a *AsyncFlowMsg) GetCurrentIndex() int {
+func (a *AsyncFlowContext) GetCurrentIndex() int {
 	return a.CurrentIndex
 }
 
-func (a *AsyncFlowMsg) GetTopics() []Topic {
+func (a *AsyncFlowContext) GetTopics() []Topic {
 	return a.Topics
 }
 
-func (a *AsyncFlowMsg) GetRollbackTopic() Topic {
+func (a *AsyncFlowContext) GetRollbackTopic() Topic {
 	return a.RollbackTopic
 }
 
-func (a *AsyncFlowMsg) SetRollbackTopic(topic Topic) {
+func (a *AsyncFlowContext) SetRollbackTopic(topic Topic) {
 	a.RollbackTopic = topic
 }
 
-func (a *AsyncFlowMsg) SetRequestID( requestID string) {
+func (a *AsyncFlowContext) SetRequestID( requestID string) {
 	a.RequestID = requestID
 }
 
-func (a *AsyncFlowMsg) SetCurrentIndex(currentIndex int) {
+func (a *AsyncFlowContext) SetCurrentIndex(currentIndex int) {
 	a.CurrentIndex = currentIndex
 }
 
-func (a *AsyncFlowMsg) SetTopics(topics []Topic) {
+func (a *AsyncFlowContext) SetTopics(topics []Topic) {
 	a.Topics = topics
 }

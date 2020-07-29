@@ -62,10 +62,11 @@ func (b BookingService) HandleAsyncBooking(ctx context.Context,req *pb.BookingRe
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
 
+	// 加入請求
 	reqMsg := handler.BookingMsgDTO{
-		FaultInject: req.FaultInject,
-		ProductID:   req.ProductID,
-		AsyncFlowMsg: &orchestrator.AsyncFlowMsg{},
+		FaultInject:      req.FaultInject,
+		ProductID:        req.ProductID,
+		AsyncFlowContext: &orchestrator.AsyncFlowContext{},
 	}
 
 
