@@ -21,9 +21,11 @@ type IAsyncFlow interface {
 }
 
 // 異步的事務節點
-type AsyncHandler func(topic Topic, data []byte, next Next)
-// 異步事務，進行下一個事務節點
+type AsyncHandler func(topic Topic, data []byte, next Next, rollback Rollback)
+// 進行下一個事務節點
 type Next func(context IAsyncFlowMsg)
+// 執行 Rollback：記錄錯誤日誌、推送 Rollback Topic
+type Rollback func(err error, context IAsyncFlowMsg)
 // Rollback的事務節點
 type RollbackHandler func(topic Topic, data []byte)
 
@@ -106,7 +108,7 @@ func NewAsyncFlow(rollbackTopic Topic) *AsyncFlow {
 }
 
 
-func GetNextFunc() Next{
+func getNextFunc() Next{
 	return func(d IAsyncFlowMsg) {
 
 		var nextTopic Topic
@@ -121,9 +123,25 @@ func GetNextFunc() Next{
 				log.Error().Str("track", string(debug.Stack())).
 					Interface("context", d).
 					Msg("GetNextFunc Error")
+				rollback(d.GetRollbackTopic(), d.GetRequestID())
 				return
 			}
 			GetMQInstance().Produce(nextTopic, nextData)
 		}
+	}
+}
+
+func getRollbackFunc() Rollback {
+	return func(err error, context IAsyncFlowMsg) {
+		// log tracked errors
+		formattedStr := eris.ToCustomString(err, pkgerror.Format)
+		log.Error().
+			Str("track", formattedStr).
+			Str("x-request-id", context.GetRequestID()).
+			Str("error", err.Error()).
+			Msgf("Trigger Rollback : %s", context.GetRollbackTopic())
+
+		// trigger rollback
+		rollback(context.GetRollbackTopic(), context.GetRequestID())
 	}
 }

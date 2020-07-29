@@ -25,13 +25,21 @@ func RegisterAsyncBookingFlows() {
 		Topic:        topic.CreatePayment,
 		AsyncHandler: handler.CreatePaymentAsync(),
 	}
+	// Rollback
+	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
+		Topic:        topic.CancelAsyncBooking,
+		Handler: handler.CancelBooking(),
+	}
+
 	// 建立流程
-	flow := orchestrator.NewAsyncFlow(topic.CancelBooking)
+	flow := orchestrator.NewAsyncFlow(topic.CancelAsyncBooking)
 	flow.Use(createOrderPair)
 	flow.Use(createPaymentPair)
 
 	// 開始監聽異步事務 Topic
 	flow.Consume()
+	// 開始監聽 rollback topic
+	flow.ConsumeRollback(rollbackPair)
 
 	// 註冊流程
 	orchestrator.GetInstance().SetAsyncFlows(AsyncBooking, flow)
@@ -47,7 +55,7 @@ func RegisterSyncBookingFlow() {
 
 	// 開始監聽 rollback Topic
 	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
-		Topic:        topic.CancelBooking,
+		Topic:        topic.CancelSyncBooking,
 		Handler: handler.CancelBooking(),
 	}
 	flow.ConsumeRollback(rollbackPair)

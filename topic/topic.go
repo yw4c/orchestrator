@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	CreateOrder   orchestrator.Topic = "CreateOrder"
-	CreatePayment orchestrator.Topic = "CreatePayment"
-	CancelBooking orchestrator.Topic = "CancelBooking"
+	CreateOrder        orchestrator.Topic = "CreateOrder"
+	CreatePayment      orchestrator.Topic = "CreatePayment"
+	CancelAsyncBooking orchestrator.Topic = "CancelAsyncBooking"
+	CancelSyncBooking orchestrator.Topic = "CancelSyncBooking"
 )

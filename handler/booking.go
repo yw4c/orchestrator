@@ -8,7 +8,6 @@ import (
 	"orchestrator/pkg/ctx"
 	"orchestrator/pkg/orchestrator"
 	"orchestrator/pkg/pkgerror"
-	"runtime/debug"
 )
 
 /***********************************************************
@@ -31,24 +30,15 @@ type BookingMsgDTO struct {
 
 // 建立訂單-異步的事務節點
 func CreateOrderAsync() orchestrator.AsyncHandler {
-	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next) {
+	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next, rollback orchestrator.Rollback) {
 
 		// Convert Message into struct
 		d := &BookingMsgDTO{}
 
 		if err := json.Unmarshal(data, d); err != nil {
-			log.Error().Str("track", string(debug.Stack())).
-				Str("error", "Unmarshal fail").
-				Str("requestID", d.RequestID).
-				Msg("CreateOrderAsync Error")
+			rollback(eris.Wrap(pkgerror.ErrInternalError, "json unmarshal fail"), d)
 			return
 		}
-		log.Info().
-			Interface("DTO", d).
-			Msg("CreateOrderAsync DTO received")
-
-
-
 		// 模擬建立訂單業務邏輯
 		var mockOrderID int64 = 11
 		d.OrderID = mockOrderID
@@ -61,23 +51,15 @@ func CreateOrderAsync() orchestrator.AsyncHandler {
 
 // 建立付款-異步的事務節點
 func CreatePaymentAsync() orchestrator.AsyncHandler {
-	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next) {
+	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next, rollback orchestrator.Rollback) {
 
 		// Convert Message into struct
 		d := &BookingMsgDTO{}
 
 		if err := json.Unmarshal(data, d); err != nil {
-			log.Error().Str("track", string(debug.Stack())).
-				Str("error", "Unmarshal fail").
-				Str("requestID", d.RequestID).
-				Msg("CreatePaymentAsync Error")
+			rollback(eris.Wrap(pkgerror.ErrInternalError, "json unmarshal fail"), d)
 			return
 		}
-
-		log.Info().
-			Interface("DTO", d).
-			Msg("CreatePaymentAsync DTO received")
-
 
 		// 模擬建立訂單業務邏輯
 		var mockPaymentID int64 = 12
@@ -85,16 +67,13 @@ func CreatePaymentAsync() orchestrator.AsyncHandler {
 
 		// 故障注入
 		if d.FaultInject {
-			log.Debug().Str("topic", string(d.RollbackTopic)).Msg("fault infect")
-			msg := &orchestrator.RollbackMsg{RequestID:d.RequestID}
-			b, _ := json.Marshal(msg)
-			orchestrator.GetMQInstance().Produce(d.RollbackTopic, b)
+			rollback(eris.Wrap(pkgerror.ErrInvalidInput, "this is an mocked invalid error"), d)
 			return
 		}
 
 		next(d)
 
-		log.Info().Interface("DTO", d).Msg("CreatePaymentAsync finished")
+		log.Info().Msg("CreatePaymentAsync finished")
 	}
 }
 

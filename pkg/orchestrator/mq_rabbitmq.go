@@ -150,7 +150,7 @@ func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
 				Str("body", string(d.Body)).
 				Msg("Consumer Access Log")
 
-			handler(topic, d.Body, GetNextFunc())
+			handler(topic, d.Body, getNextFunc(), getRollbackFunc())
 
 			d.Ack(false)
 		}

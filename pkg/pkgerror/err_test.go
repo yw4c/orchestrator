@@ -28,7 +28,7 @@ func TestErr(t *testing.T) {
 
 func TestConvertProtoErr(t *testing.T) {
 
-	err := eris.Wrap(ErrInvalidInput, "param format is wrong")
+	err := eris.Wrap(ErrInvalidInput, "param Format is wrong")
 	err = convertProtoErr(err)
 	log.Println(err)
 }
