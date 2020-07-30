@@ -81,13 +81,18 @@ func CreatePaymentAsync() orchestrator.AsyncHandler {
 *   同步事務節點
 ************************************************************/
 
+// 事務節點間，傳遞 Context 資料的 key
+const (
+	BookingSyncPbReq orchestrator.FlowContextKeyReq = "bookingSyncPbReq"
+	BookingSyncPbResp orchestrator.FlowContextKeyResp = "bookingSyncPbResp"
+)
 
 // 建立訂單-同步的事務節點
 func CreateOrderSync() orchestrator.SyncHandler {
 	return func(requestID string, ctx *ctx.Context) error {
 
 		// 從 Context 取出 gRPC Request
-		req, isExist := ctx.Get(orchestrator.BookingSyncPbReq)
+		req, isExist := ctx.Get(string(BookingSyncPbReq))
 		if !isExist {
 			return eris.Wrap(pkgerror.ErrInternalError,"Can not get request in first handler")
 		}
@@ -112,7 +117,7 @@ func CreateOrderSync() orchestrator.SyncHandler {
 			PaymentID:            0,
 			FaultInject:	request.FaultInject,
 		}
-		ctx.Set(orchestrator.BookingSyncPbResp, resp)
+		ctx.Set(string(BookingSyncPbResp), resp)
 		return nil
 	}
 
@@ -123,7 +128,7 @@ func CreatePaymentSync() orchestrator.SyncHandler {
 	return func(requestID string, ctx *ctx.Context) error {
 
 		// 從 Context 取出 gRPC Response DTO
-		input, isExist := ctx.Get(orchestrator.BookingSyncPbResp)
+		input, isExist := ctx.Get(string(BookingSyncPbResp))
 		if !isExist {
 			return eris.Wrap(pkgerror.ErrInternalError,"Can not get request in first handler")
 		}
@@ -157,9 +162,21 @@ func CreatePaymentSync() orchestrator.SyncHandler {
 
 func CancelBooking() orchestrator.RollbackHandler {
 	return func(topic orchestrator.Topic, data []byte) {
+
+		msg := &orchestrator.RollbackMsg{}
+		if err := json.Unmarshal(data, msg); err != nil {
+			log.Panic().Str("topic", string(topic)).Str("data", string(data)).Msg("Failed to unmarshal")
+			return
+		}
+
+		// 模擬 Cancel
+		// go orderClient.Cancel(msg.RequestID)
+		// go paymentClient.Cancel(msg.RequestID)
+
 		log.Info().
 			Str("topic", string(topic)).
 			Str("Message", string(data)).
+			Str("requestID", msg.RequestID).
 			Msg("Cancelling Booking, Rollback flow")
 
 	}

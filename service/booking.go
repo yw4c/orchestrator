@@ -33,7 +33,7 @@ func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingReq
 	}
 
 	// 執行事務流程
-	response, err := flow.Run(requestID, req)
+	response, err := flow.Run(requestID, req, handler.BookingSyncPbReq, handler.BookingSyncPbResp)
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}

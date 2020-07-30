@@ -12,13 +12,16 @@ type ISyncFlow interface {
 	// 將䩞點依序加入
 	Use(syncHandler SyncHandler) ISyncFlow
 	// 執行事務流程
-	Run(requestID string, requestParam interface{}) (response interface{}, err error)
+	Run(requestID string, requestParam interface{}, reqKey FlowContextKeyReq, respKey FlowContextKeyResp)(response interface{}, err error)
 	IFlow
 }
 
 // 同步的事務節點
 type SyncHandler func(requestID string, ctx *ctx.Context) error
-
+// 從 Context 取得 Request Value 的 Key
+type FlowContextKeyReq string
+// 從 Context 取得 Response Value 的 Key
+type FlowContextKeyResp string
 
 type SyncFlow struct {
 	handlers      []SyncHandler
@@ -35,14 +38,14 @@ func (s *SyncFlow) Use(syncHandler SyncHandler) ISyncFlow {
 	return s
 }
 
-func (s *SyncFlow) Run(requestID string, requestParam interface{}) (response interface{}, err error) {
+func (s *SyncFlow) Run(requestID string, requestParam interface{}, reqKey FlowContextKeyReq, respKey FlowContextKeyResp) (response interface{}, err error) {
 
 	if s.rollbackTopic == "" {
 		return nil, eris.Wrap(pkgerror.ErrInternalError, "rollback topic is not set")
 	}
 
 	context := &ctx.Context{}
-	context.Set(BookingSyncPbReq, requestParam)
+	context.Set(string(reqKey), requestParam)
 
 	for _,v := range s.handlers {
 		if err := v(requestID, context); err != nil {
@@ -59,7 +62,7 @@ func (s *SyncFlow) Run(requestID string, requestParam interface{}) (response int
 	}
 
 	// Flow finished successfully
-	resp, exist := context.Get(BookingSyncPbResp)
+	resp, exist := context.Get(string(respKey))
 	if !exist {
 		return nil, eris.Wrap(pkgerror.ErrInternalError, "Can not get DTO from Context")
 	}
@@ -72,8 +75,3 @@ func NewSyncFlow() ISyncFlow {
 	}
 }
 
-// 事務節點間，傳遞 Context 資料的 key
-const (
-	BookingSyncPbReq = "bookingSyncPbReq"
-	BookingSyncPbResp = "bookingSyncPbResp"
-)

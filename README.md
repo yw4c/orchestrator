@@ -57,39 +57,45 @@
     
     
 ```go
+// 事務節點間，傳遞 Context 資料的 key
+const (
+	BookingSyncPbReq orchestrator.FlowContextKeyReq = "bookingSyncPbReq"
+	BookingSyncPbResp orchestrator.FlowContextKeyResp = "bookingSyncPbResp"
+)
+
 // 建立訂單-同步的事務節點
 func CreateOrderSync() orchestrator.SyncHandler {
-    return func(requestID string, ctx *ctx.Context) error {
+	return func(requestID string, ctx *ctx.Context) error {
 
-        // 從 Context 取出 gRPC Request
-        req, isExist := ctx.Get(orchestrator.BookingSyncPbReq)
-        if !isExist {
-            return eris.Wrap(pkgerror.ErrInternalError,"Can not get request in first handler")
-        }
-        var request *pb.BookingRequest
-        request, ok := req.(*pb.BookingRequest)
-        if !ok {
-            return eris.Wrap(pkgerror.ErrInternalError,"Convert Request to Protobuf DTO fail")
-        }
+		// 從 Context 取出 gRPC Request
+		req, isExist := ctx.Get(string(BookingSyncPbReq))
+		if !isExist {
+			return eris.Wrap(pkgerror.ErrInternalError,"Can not get request in first handler")
+		}
+		var request *pb.BookingRequest
+		request, ok := req.(*pb.BookingRequest)
+		if !ok {
+			return eris.Wrap(pkgerror.ErrInternalError,"Convert Request to Protobuf DTO fail")
+		}
 
-        // 模擬建立訂單業務邏輯
-        var mockOrderID int64 = 1
-        log.Info().
-            Str("requestID", requestID).
-            Int64("productID", request.ProductID).
-            Int64("orderID", mockOrderID).
-            Msg("Finish Create Order")
+		// 模擬建立訂單業務邏輯
+		var mockOrderID int64 = 1
+		log.Info().
+			Str("requestID", requestID).
+			Int64("productID", request.ProductID).
+			Int64("orderID", mockOrderID).
+			Msg("Finish Create Order")
 
-        // 將訂單資訊存入 Proto 物件交給下一個
-        resp := &pb.BookingSyncResponse{
-            RequestID:            requestID,
-            OrderID:              mockOrderID,
-            PaymentID:            0,
-            FaultInject:	request.FaultInject,
-        }
-        ctx.Set(orchestrator.BookingSyncPbResp, resp)
-        return nil
-    }
+		// 將訂單資訊存入 Proto 物件交給下一個
+		resp := &pb.BookingSyncResponse{
+			RequestID:            requestID,
+			OrderID:              mockOrderID,
+			PaymentID:            0,
+			FaultInject:	request.FaultInject,
+		}
+		ctx.Set(string(BookingSyncPbResp), resp)
+		return nil
+	}
 
 }
 
@@ -112,14 +118,14 @@ func RegisterSyncBookingFlow() {
 		Use(handler.CreatePaymentSync())
 
 	// 開始監聽 rollback Topic
-	rollbackPair := &orchestrator.TopicHandlerPair{
-		Topic:        topic.CancelBooking,
-		AsyncHandler: handler.CancelBooking(),
+	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
+		Topic:        topic.CancelSyncBooking,
+		Handler: handler.CancelBooking(),
 	}
 	flow.ConsumeRollback(rollbackPair)
 
 	// 註冊流程
-	orchestrator.GetInstance().SetFlows(SyncBooking, flow)
+	orchestrator.GetInstance().SetSyncFlows(SyncBooking, flow)
 }
 ```
     
@@ -131,23 +137,35 @@ func RegisterSyncBookingFlow() {
 * 在請求協程中調用 Run() 開始執行事務
     
 ```go
-// 從 metadata 取得 request-id
-requestID, err := helper.GetRequestID(ctx)
-if err != nil {
-    return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-}
+func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingRequest) (resp *pb.BookingSyncResponse, err error) {
 
-// 從 facade 取得註冊的事務流程
-flow := orchestrator.GetInstance().GetFlow(facade.SyncBooking)
-if flow == nil {
-    err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
-    return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-}
+	// 從 metadata 取得 request-id
+	requestID, err := helper.GetRequestID(ctx)
+	if err != nil {
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
 
-// 執行事務流程
-response, err := flow.Run(requestID, req)
-if err != nil {
-    return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	// 從 facade 取得註冊的事務流程
+	flow := orchestrator.GetInstance().GetSyncFlow(facade.SyncBooking)
+	if flow == nil {
+		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
+
+	// 執行事務流程
+	response, err := flow.Run(requestID, req, handler.BookingSyncPbReq, handler.BookingSyncPbResp)
+	if err != nil {
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
+
+	// Convert response
+	if resp, ok := response.(*pb.BookingSyncResponse); ok {
+		return resp, nil
+	} else {
+		err := eris.Wrap(pkgerror.ErrInternalServerError, "Convert fail")
+		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
+	}
+
 }
 ```
 
@@ -334,12 +352,25 @@ CancelBooking orchestrator.Topic = "CancelBooking"
 ```go
 func CancelBooking() orchestrator.RollbackHandler {
 	return func(topic orchestrator.Topic, data []byte) {
+
+		msg := &orchestrator.RollbackMsg{}
+		if err := json.Unmarshal(data, msg); err != nil {
+			log.Panic().Str("topic", string(topic)).Str("data", string(data)).Msg("Failed to unmarshal")
+			return
+		}
+
+		// 模擬 Cancel
+		// go orderClient.Cancel(msg.RequestID)
+		// go paymentClient.Cancel(msg.RequestID)
+
 		log.Info().
 			Str("topic", string(topic)).
 			Str("Message", string(data)).
+			Str("requestID", msg.RequestID).
 			Msg("Cancelling Booking, Rollback flow")
 
 	}
 }
+
 ```
 * 請參考 [handler](./handler/booking.go)
