@@ -10,7 +10,7 @@
 
 - [Orchestrator Framework of Saga pattern](#orchestrator-framework-of-saga-pattern)
   - [Contents](#contents)
-  - [Installation](#installation)
+  - [Quick Start](#quick-start)
   - [Structure](#structure)
   - [Examples](#examples)
     - [範例 Booking 流程](#範例-booking-流程)
@@ -26,6 +26,14 @@
         - [調用事務流程](#調用事務流程)
         - [測試事務流程](#測試事務流程)
     - [實現 rollback 事件](#實現-rollback-事件)
+    
+## Quick Start
+本地啟動 RabbitMQ
+````
+    cd deployment/local
+    docker-compose build
+    docker-compose up
+````
     
 ## Structure
 ````

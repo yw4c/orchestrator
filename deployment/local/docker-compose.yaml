@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  ### RabbitMQ #############################################
+  rabbitmq:
+    build: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15671:15671"
+    privileged: true
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    hostname: laradock-rabbitmq
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    networks:
+      - backend
+networks:
+  backend:
+    driver: "bridge"
+volumes:
+  rabbitmq:
+    driver: local
