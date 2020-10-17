@@ -1,9 +1,8 @@
 # Orchestrator Framework of Saga pattern
-* Orchestrator 在微服務中，負責集中處理分散事務流程。
-* 流程支援同步/異步。
-* 實現框架接口，可以輕易註冊、擴展分散事務流程。
-* 以 gRPC 作為服務入口。
-* 可抽換 Message Queue ，目前支援 RabbitMQ
+* Orchestrator 在微服務中，負責集中處理分散事務流程; 上游服務只需維護 gRPC 接口。
+* 流程支援同步(Sync)/異步(Async)，以及鎖住連線使用隊列的節流(Throttling)模式。
+* 只要實現框架接口，可以輕易註冊、擴展分散事務流程。
+* 可抽換 Message Queue ，目前支援 RabbitMQ, NATS。
 
 
 ## Contents
@@ -28,7 +27,7 @@
     - [實現 rollback 事件](#實現-rollback-事件)
     
 ## Quick Start
-本地啟動 RabbitMQ
+本地啟動相關服務
 ````
     cd deployment/local
     docker-compose build
@@ -43,6 +42,34 @@
 ├── service: 實現 protobuf gRPC ServiceServer 接口
 ├── topic: 註冊 Message Queue Topics
 ````
+
+## Concept
+### 同步流程 (Sync Flow)
+![Alt text](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgU2FnYVN5bmMKQ2xpZW50LT5FbmRwb2ludDog6KiC5Zau6LOH5paZIChodHRwKQoAFggtPk9yY2hlc3RyYXRvcgAcEGdSUEMpCgAWDC0-T3JkZQAQGWRlABgK5bu656uLAHcGABEKAFsS57eo6JmfAFcWUGF5bWUAgToKAB4NIAoAFwcAHAsAbgbku5jmrL7llq4AGAoAgVgOABsG6LOH6KiKAIFQFgCCNAoAGBQAgjQKAIJoBgBCEACCXgYKCgoK&s=roundgreen)
+
+* 使用 Context 組合從各服務取得的資料
+
+### 取消流程 (Rollback)
+![Alt text](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgUm9sbGJhY2sKQ2xpZW50LT5FbmRwb2ludDog6KiC5Zau6LOH5paZIChodHRwKQoAFggtPk9yY2hlc3RyYXRvcgAcEGdSUEMpCgAWDC0-T3JkZQAQGWRlABgK5bu656uLAHcGABEKAFsS57eo6JmfAFcWUGF5bWUAgToKAB4NIAoAFwcAHAsAbgbmlLbmrL7llq7lpLHmlZcAHgoAgV4OZXJyb3IAgU8WTVE6IHRyYWNlSUQgKHB1Ymxpc2gpCk1RAIIfEAAbCWNvbnN1bWUAghYXAEIJAIITFY-W5raIAIIMHE9LAIJ1FgCDWQoAgT4NAINSCgCEBgYAgWEJAIN1BgoK&s=roundgreen)
+* 為支援同、異步；發生錯誤時推播 Rollback topic 觸發事件。
+* msg 中包含貫穿全路的 traceID (or x-request-id)
+* 再以同步方式向各服務發起取消要求，各服務以 traceID 取消資料
+
+### 異步流程 (Async Flow)
+![Alt text](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgU2FnYUFzeW5jCgpDbGllbnQtPkVuZHBvaW50OiDoqILllq7os4fmlpkgKGh0dHApCgAWCC0-T3JjaGVzdHJhdG9yABwQZ1JQQykKCgAXDC0-TVEAQxBwdWJsaXNoKQAaDwB4Ck9LAEQIAG4KAIEiBgAWBgCBDgYKTVEAcR5jb25zdW1lAFgQT3JkZQCBJBcAFgUAGQnlu7rnq4sAggkGABMIAIB_CENhbGxiYWNrAIIZCAAxCQCCEgwAgT4KCgoKCgoK&s=roundgreen)
+* 資料以 json 格式在 MQ 傳遞，orchestrator(replicas) 自行推播接收。再轉 gRPC 向服務請求。
+* 接收請求後直接 response , 流程背景處理
+* 資料 response 以 callback 方式回覆
+
+### 節流流程 (Throttling Flow)
+![Alt text](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgU2FnYUh5YnJpZApDbGllbnQtPkVuZHBvaW50OiDoqILllq7os4fmlpkgKGh0dHApCgAWCC0-T3JjaGVzdHJhdG9yABwQZ1JQQykKABYMLT5SZWRpczog55uj6IG95rWB56iL5piv5ZCm5a6M5oiQAB8PTVEAcBBwdWJsaXNoKQpNUQBfHmNvbnN1bWUAcBBPcmRlAIEQGWRlABgK5bu656uLAIF3BgARCgCBYQxPSwCBRh3kv67mlLkAgV0G54K65beyAIFcBwCBfgUAgikRp7jnmbwAgh4PAIJ7CgBiCgCCcQoAgyUGAIECBgCDEQY&s=roundgreen)
+* 使用 MQ 透過 Queue 與控制 Concurrency 數，改善同步流程造成 upstream 過載情形，達成 熔斷, retry, rate limit 無法做到的確保執行。
+* 將請求連線 lock 住，後續異步執行。
+* orchestrator 有多個 replica , 所以我們須 watch redis 流程是否已完成。
+
+
+## Task
+
 
 ## Examples
 
