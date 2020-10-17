@@ -3,7 +3,7 @@ package config
 type config struct {
 	//  產品環境 <dev,sit,prod>
 	Env string
-	IsDebug bool
+	IsDebug bool `mapstructure:"is_debug"`
 	// app 對外服務
 	Server struct{
 		// gRPC
@@ -28,10 +28,10 @@ type config struct {
 }
 
 type Topic struct {
-	// short name
-	Topic string
 	// mq server 註冊的 topic 名稱
-	Name string
+	Topic string
+	// unique name
+	ID string `mapstructure:"id"`
 	// 接收的併發數
 	Concurrency int
 }

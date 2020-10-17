@@ -9,6 +9,7 @@ require (
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
+	github.com/stretchr/testify v1.6.1
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200722175500-76b94024e4b6 // indirect
 	golang.org/x/text v0.3.3 // indirect

@@ -10,7 +10,7 @@ import (
 var once sync.Once
 var instance config
 
-func GetConfigInstance() config {
+func GetConfigInstance() *config {
 
 	once.Do(func() {
 
@@ -23,17 +23,15 @@ func GetConfigInstance() config {
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
 		}
 
-		c := &config{}
-		viper.Unmarshal(&c)
-		// Read Only
-		instance = *c
+		viper.Unmarshal(&instance)
 
-		log.Info().
-			Str("path", viper.ConfigFileUsed()).
-			Interface("dao", c).
-			Msg("config init")
-
+		if instance.IsDebug {
+			log.Info().
+				Str("path", viper.ConfigFileUsed()).
+				Interface("dao", instance).
+				Msg("Config Init")
+		}
 	})
 
-	return instance
+	return &instance
 }

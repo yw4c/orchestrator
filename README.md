@@ -29,10 +29,13 @@
 ## Quick Start
 本地啟動相關服務
 ````sh
+    
     export OCH_PATH=$(pwd)
+    cp app.dev.yaml app.yaml
+
     cd deployment/local
-    docker-compose build
-    docker-compose up
+    docker-compose up --build
+
 ````
     
 ## Structure
