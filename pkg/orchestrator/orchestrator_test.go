@@ -27,7 +27,7 @@ func init()  {
 		return nil
 	}
 
-	flow := NewSyncFlow( Topic("666"))
+	flow := NewSyncFlow()
 	flow.Use(handlerA).Use(handlerB)
 	orchestrator.SetSyncFlows(Facade("foo"), flow)
 }

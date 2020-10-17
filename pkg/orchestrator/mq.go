@@ -1,10 +1,9 @@
 package orchestrator
 
 import (
+	"orchestrator/config"
 	"sync"
 )
-
-type Topic string
 
 
 type MQ interface {
@@ -21,4 +20,24 @@ func GetMQInstance() MQ {
 		mq = NewRabbitMQ()
 	})
 	return mq
+}
+
+type Topic string
+
+func (id Topic) GetTopicName() string {
+	for _,v := range config.GetConfigInstance().Topics {
+		if string(id) == v.ID {
+			return v.Topic
+		}
+	}
+	return ""
+}
+
+func (id Topic) GetConcurrency() int {
+	for _,v := range config.GetConfigInstance().Topics {
+		if string(id) == v.ID {
+			return v.Concurrency
+		}
+	}
+	return 1
 }

@@ -9,7 +9,7 @@ type IAsyncFlowContext interface {
 	GetRequestID()string
 	GetCurrentIndex()int
 	GetTopics()[]Topic
-	GetRollbackTopic()Topic
+	GetRollbackTopic() Topic
 }
 
 // Rollback 的推播格式

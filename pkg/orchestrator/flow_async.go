@@ -35,7 +35,7 @@ type TopicHandlerPair struct {
 	AsyncHandler AsyncHandler
 }
 type TopicRollbackHandlerPair struct {
-	Topic        Topic
+	Topic   Topic
 	Handler RollbackHandler
 }
 

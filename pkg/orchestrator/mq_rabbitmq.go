@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"github.com/streadway/amqp"
+	"orchestrator/config"
 	"runtime/debug"
 	"time"
 )
@@ -12,9 +13,10 @@ import (
 // NewRabbitMQ 建立 pod 與 RabbitMQ 連線
 func NewRabbitMQ()*RabbitMQ {
 
+	mqConfig := config.GetConfigInstance().Client.RabbitMQ
 	mq := &RabbitMQ{}
 
-	connQuery:= fmt.Sprintf("amqp://%s:%s@%s/","guest" , "guest", "localhost:5672")
+	connQuery:= fmt.Sprintf("amqp://%s:%s@%s/", mqConfig.Username, mqConfig.Password, mqConfig.Host+":"+mqConfig.Port)
 	log.Info().Msg("Dialing to RabbitMQ" + connQuery)
 
 	var err error
@@ -36,7 +38,10 @@ type RabbitMQ struct {
 
 
 
-func (r *RabbitMQ) Produce(topic Topic, message []byte) {
+func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
+
+	topic := topicID.GetTopicName()
+
 	ch, err := r.conn.Channel()
 	if err != nil {
 		panic(err.Error())
@@ -65,9 +70,9 @@ func (r *RabbitMQ) Produce(topic Topic, message []byte) {
 
 
 // Exchange -> Binding -> Queues -> Consumer
-func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
+func (r *RabbitMQ) ListenAndConsume(topicID Topic, handler AsyncHandler) {
 
-
+	topic := topicID.GetTopicName()
 
 	// channels 復用一 Connection 連線, channel 對應一 consumer
 	channel, err := r.conn.Channel()
@@ -150,7 +155,7 @@ func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
 				Str("body", string(d.Body)).
 				Msg("Consumer Access Log")
 
-			handler(topic, d.Body, getNextFunc(), getRollbackFunc())
+			handler(topicID, d.Body, getNextFunc(), getRollbackFunc())
 
 			d.Ack(false)
 		}
@@ -160,7 +165,9 @@ func (r *RabbitMQ) ListenAndConsume(topic Topic, handler AsyncHandler) {
 
 }
 
-func (r *RabbitMQ) ConsumeRollback(topic Topic, handler RollbackHandler) {
+func (r *RabbitMQ) ConsumeRollback(topicID Topic, handler RollbackHandler) {
+
+	topic := topicID.GetTopicName()
 
 	// channels 復用一 Connection 連線, channel 對應一 consumer
 	channel, err := r.conn.Channel()
@@ -243,7 +250,7 @@ func (r *RabbitMQ) ConsumeRollback(topic Topic, handler RollbackHandler) {
 				Str("body", string(d.Body)).
 				Msg("Consumer Access Log")
 
-			handler(topic, d.Body)
+			handler(topicID, d.Body)
 
 			d.Ack(false)
 		}
