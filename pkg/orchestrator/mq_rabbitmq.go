@@ -6,6 +6,7 @@ import (
 	"github.com/streadway/amqp"
 	"orchestrator/config"
 	"runtime/debug"
+	"strconv"
 	"time"
 )
 
@@ -47,10 +48,6 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 		panic(err.Error())
 	}
 	defer ch.Close()
-
-	if topic == "" {
-		panic("topic can not be empty")
-	}
 
 	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
@@ -122,46 +119,51 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, handler AsyncHandler) {
 		panic(err.Error())
 	}
 
+	for i:=1; i <= topicID.GetConcurrency();i ++ {
+		consumerName := topic+"_consumer_"+strconv.Itoa(i)
+		log.Info().Str("consumer_name", consumerName).Msg("registering")
 
-	// register consumer
-	msgs, err := channel.Consume(
-		q.Name, // queue
-		string(topic+"_consumer"),     // consumer
-		false,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	go func(msgs <-chan amqp.Delivery, handler AsyncHandler) {
-
-		// Panic recover
-		defer func() {
-			if p := recover(); p != nil {
-				log.Error().Interface("message", p).Str("trace", string(debug.Stack())).Msg("Consumer Panic Recover")
-			}
-			defer r.conn.Close()
-			defer channel.Close()
-		}()
-
-		// 處理訊息
-		for d := range msgs {
-			log.Info().
-				Str("topic", string(topic)).
-				Str("body", string(d.Body)).
-				Msg("Consumer Access Log")
-
-			handler(topicID, d.Body, getNextFunc(), getRollbackFunc())
-
-			d.Ack(false)
+		// register consumer
+		msgs, err := channel.Consume(
+			q.Name,                    // queue
+			consumerName, // consumer
+			false,                     // auto-ack
+			false,                     // exclusive
+			false,                     // no-local
+			false,                     // no-wait
+			nil,                       // args
+		)
+		if err != nil {
+			panic(err.Error())
 		}
-	}(msgs, handler)
 
+		go func(msgs <-chan amqp.Delivery, handler AsyncHandler, consumerName string) {
 
+			// Panic recover
+			defer func() {
+				if p := recover(); p != nil {
+					log.Error().Interface("message", p).Str("trace", string(debug.Stack())).Msg("Consumer Panic Recover")
+				}
+				defer r.conn.Close()
+				defer channel.Close()
+			}()
+
+			// 處理訊息
+			for d := range msgs {
+				log.Info().
+					Str("consumer", consumerName).
+					Str("topic", string(topic)).
+					Str("body", string(d.Body)).
+					Msg("Consumer Access Log")
+
+				handler(topicID, d.Body, getNextFunc(), getRollbackFunc())
+
+				d.Ack(false)
+				log.Info().Msg("finish")
+			}
+		}(msgs, handler, consumerName)
+
+	}
 
 }
 
@@ -217,44 +219,47 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, handler RollbackHandler) {
 		panic(err.Error())
 	}
 
+	for i:=1; i <= topicID.GetConcurrency();i ++ {
+		consumerName := topic + "_consumer_" + strconv.Itoa(i)
+		log.Info().Str("consumer_name", consumerName).Msg("registering")
 
-	// register consumer
-	msgs, err := channel.Consume(
-		q.Name, // queue
-		string(topic+"_consumer"),     // consumer
-		false,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	go func(msgs <-chan amqp.Delivery, handler RollbackHandler) {
-
-		// Panic recover
-		defer func() {
-			if p := recover(); p != nil {
-				log.Error().Interface("message", p).Str("trace", string(debug.Stack())).Msg("Consumer Panic Recover")
-			}
-			defer r.conn.Close()
-			defer channel.Close()
-		}()
-
-		// 處理訊息
-		for d := range msgs {
-			log.Info().
-				Str("topic", string(topic)).
-				Str("body", string(d.Body)).
-				Msg("Consumer Access Log")
-
-			handler(topicID, d.Body)
-
-			d.Ack(false)
+		// register consumer
+		msgs, err := channel.Consume(
+			q.Name,                    // queue
+			consumerName, // consumer
+			false,                     // auto-ack
+			false,                     // exclusive
+			false,                     // no-local
+			false,                     // no-wait
+			nil,                       // args
+		)
+		if err != nil {
+			panic(err.Error())
 		}
-	}(msgs, handler)
 
+		go func(msgs <-chan amqp.Delivery, handler RollbackHandler) {
+
+			// Panic recover
+			defer func() {
+				if p := recover(); p != nil {
+					log.Error().Interface("message", p).Str("trace", string(debug.Stack())).Msg("Consumer Panic Recover")
+				}
+				defer r.conn.Close()
+				defer channel.Close()
+			}()
+
+			// 處理訊息
+			for d := range msgs {
+				log.Info().
+					Str("topic", string(topic)).
+					Str("body", string(d.Body)).
+					Msg("Consumer Access Log")
+
+				handler(topicID, d.Body)
+
+				d.Ack(false)
+			}
+		}(msgs, handler)
+	}
 
 }

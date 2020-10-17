@@ -30,7 +30,7 @@ func (id Topic) GetTopicName() string {
 			return v.Topic
 		}
 	}
-	return ""
+	return string(id)
 }
 
 func (id Topic) GetConcurrency() int {
