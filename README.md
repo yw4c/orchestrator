@@ -28,7 +28,8 @@
     
 ## Quick Start
 本地啟動相關服務
-````
+````sh
+    export OCH_PATH=$(pwd)
     cd deployment/local
     docker-compose build
     docker-compose up

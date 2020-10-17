@@ -1,0 +1,50 @@
+# 產品環境 <dev,sit,prod>
+env: dev
+is_debug: true
+
+# app 對外服務
+server:
+  grpc:
+    port: 10050
+
+# 抽換服務
+engine:
+  # message queue 選用 <rabbit_mq, nats>
+  message_queue: rabbit_mq
+
+# Message Queue Topic
+# - topic : short name
+# - name : mq server 註冊的 topic 名稱，命名方式 topic_<project name>_<dev,sit,prod>_<topic name>
+# - concurrency : 接收的併發數
+topics:
+  - topic: create_order
+    name: topic_booking_dev_create_order
+    concurrency: 100
+  - topic: create_payment
+    name: topic_booking_dev_create_payment
+    concurrency: 100
+  - topic: cancel_async_booking
+    name: topic_booking_dev_cancel_async_booking
+    concurrency: 1
+  - topic: cancel_sync_booking
+    name: topic_booking_dev_cancel_sync_booking
+    concurrency: 1
+
+# app 連線對象
+client:
+  redis:
+    host: external-reids
+    port: 6379
+    db: 1
+    pool_size: 100
+    min_idle_conn: 10
+    dial_timeout: 10s
+    read_timeout: 10s
+    write_timeout: 10s
+    pool_timeout: 11s
+    idle_timeout: 1m
+  rabbit_mq:
+    host: external-rabbitmq
+    port: 5672
+    username: guest
+    password: guest

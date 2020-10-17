@@ -7,6 +7,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/rotisserie/eris v0.4.1
 	github.com/rs/zerolog v1.19.0
+	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200722175500-76b94024e4b6 // indirect
