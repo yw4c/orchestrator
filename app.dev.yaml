@@ -13,21 +13,23 @@ engine:
   message_queue: rabbit_mq
 
 # Message Queue Topic
-# - topic : short name
-# - name : mq server 註冊的 topic 名稱，命名方式 topic_<project name>_<dev,sit,prod>_<topic name>
+# - topic : short name 對應 ./topic/topic.go
+# - topic (option) : mq server 註冊的 topic 名稱
+#    命名方式 topic_<project name>_<dev,sit,prod>_<topic name>_<pod id(option)>
+#    default value is same as id
 # - concurrency : 接收的併發數
 topics:
   - id: create_order
-    topic: topic_booking_dev_create_order
+    topic: "topic_booking_dev.create_order.$POD_ID"
     concurrency: 100
   - id: create_payment
-    topic: topic_booking_dev_create_payment
+    topic: "topic_booking_dev.create_payment.$POD_ID"
     concurrency: 100
   - id: cancel_async_booking
-    topic: topic_booking_dev_cancel_async_booking
+    topic: topic_booking_dev.cancel_async_booking
     concurrency: 1
   - id: cancel_sync_booking
-    topic: topic_booking_dev_cancel_sync_booking
+    topic: topic_booking_dev.cancel_sync_booking
     concurrency: 1
 
 # app 連線對象
@@ -36,13 +38,10 @@ client:
     host: external-reids
     port: 6379
     db: 1
-    pool_size: 100
-    min_idle_conn: 10
-    dial_timeout: 10s
-    read_timeout: 10s
-    write_timeout: 10s
-    pool_timeout: 11s
-    idle_timeout: 1m
+    pool_size: 10
+    min_idle_conn: 5
+    pool_timeout: 5
+    idle_timeout: 60
   rabbit_mq:
     host: external-rabbitmq
     port: 5672

@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"orchestrator/config"
+	"os"
 	"sync"
 )
 
@@ -27,7 +28,7 @@ type Topic string
 func (id Topic) GetTopicName() string {
 	for _,v := range config.GetConfigInstance().Topics {
 		if string(id) == v.ID {
-			return v.Topic
+			return os.ExpandEnv(v.Topic)
 		}
 	}
 	return string(id)

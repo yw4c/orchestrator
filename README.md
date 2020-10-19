@@ -55,7 +55,7 @@
 
 ### 取消流程 (Rollback)
 ![Alt text](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgUm9sbGJhY2sKQ2xpZW50LT5FbmRwb2ludDog6KiC5Zau6LOH5paZIChodHRwKQoAFggtPk9yY2hlc3RyYXRvcgAcEGdSUEMpCgAWDC0-T3JkZQAQGWRlABgK5bu656uLAHcGABEKAFsS57eo6JmfAFcWUGF5bWUAgToKAB4NIAoAFwcAHAsAbgbmlLbmrL7llq7lpLHmlZcAHgoAgV4OZXJyb3IAgU8WTVE6IHRyYWNlSUQgKHB1Ymxpc2gpCk1RAIIfEAAbCWNvbnN1bWUAghYXAEIJAIITFY-W5raIAIIMHE9LAIJ1FgCDWQoAgT4NAINSCgCEBgYAgWEJAIN1BgoK&s=roundgreen)
-* 為支援同、異步；發生錯誤時推播 Rollback topic 觸發事件。
+* 發生錯誤時推播 Rollback topic 觸發事件。
 * msg 中包含貫穿全路的 traceID (or x-request-id)
 * 再以同步方式向各服務發起取消要求，各服務以 traceID 取消資料
 

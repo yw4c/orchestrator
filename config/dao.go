@@ -48,4 +48,10 @@ type Redis struct {
 	Port string
 	DB int
 	PoolSize int
+	MinIdleConn int
+	DialTimeout int
+	ReadTimeout int
+	WriteTimeout int
+	PoolTimeout int
+	IdleTimeout int
 }
