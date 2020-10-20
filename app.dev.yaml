@@ -34,14 +34,6 @@ topics:
 
 # app 連線對象
 client:
-  redis:
-    host: external-reids
-    port: 6379
-    db: 1
-    pool_size: 10
-    min_idle_conn: 5
-    pool_timeout: 5
-    idle_timeout: 60
   rabbit_mq:
     host: external-rabbitmq
     port: 5672

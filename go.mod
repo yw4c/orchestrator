@@ -7,6 +7,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/wire v0.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
+	github.com/magiconair/properties v1.8.1
 	github.com/rotisserie/eris v0.4.1
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/viper v1.7.1
