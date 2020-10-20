@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/rotisserie/eris"
 	"orchestrator/pkg/pkgerror"
-
+	"time"
 )
 const throttlingTimeout = 60
 
@@ -47,7 +47,7 @@ func (t ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (r
 
 	// 開始推播給第一個事務
 	GetMQInstance().Produce(t.handlers[0].Topic, data)
-	//err = Wait(requestID, throttlingTimeout*time.Second)
+	response, err = Wait(requestID, throttlingTimeout*time.Second)
 	if err != nil {
 		return
 	}

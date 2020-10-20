@@ -17,7 +17,10 @@ type config struct {
 		MessageQueue string  `mapstructure:"message_queue"`
 	}
 	// Message Queue Topics
-	Topics []Topic
+	MessageQueue struct{
+		TopicPrefix string `mapstructure:"topic_prefix"`
+		Topics []Topic
+	} `mapstructure:"message_queue"`
 
 	// app 連線對象
 	Client struct {
@@ -29,7 +32,7 @@ type config struct {
 
 type Topic struct {
 	// mq server 註冊的 topic 名稱
-	Topic string
+	IOSame bool `mapstructure:"io_same"`
 	// unique name
 	ID string `mapstructure:"id"`
 	// 接收的併發數

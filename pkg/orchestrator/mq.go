@@ -26,16 +26,23 @@ func GetMQInstance() MQ {
 type Topic string
 
 func (id Topic) GetTopicName() string {
-	for _,v := range config.GetConfigInstance().Topics {
+	prefix := config.GetConfigInstance().MessageQueue.TopicPrefix+"."
+
+	var name string
+	for _,v := range config.GetConfigInstance().MessageQueue.Topics {
 		if string(id) == v.ID {
-			return os.ExpandEnv(v.Topic)
+			name = v.ID
+			if v.IOSame {
+				name = os.ExpandEnv(name+".$POD_ID")
+			}
+			return prefix+name
 		}
 	}
-	return string(id)
+	return prefix+string(id)
 }
 
 func (id Topic) GetConcurrency() int {
-	for _,v := range config.GetConfigInstance().Topics {
+	for _,v := range config.GetConfigInstance().MessageQueue.Topics {
 		if string(id) == v.ID {
 			return v.Concurrency
 		}

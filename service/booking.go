@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"github.com/rotisserie/eris"
-	"google.golang.org/grpc"
 	"orchestrator/facade"
 	"orchestrator/handler"
 	"orchestrator/pb"
@@ -82,7 +81,7 @@ func (b BookingService) HandleAsyncBooking(ctx context.Context,req *pb.BookingRe
 	}, err
 }
 
-func (b BookingService) HandleThrottlingBooking(ctx context.Context, req *pb.BookingRequest, opts ...grpc.CallOption) (*pb.BookingSyncResponse, error) {
+func (b BookingService) HandleThrottlingBooking(ctx context.Context, req *pb.BookingRequest) (*pb.BookingSyncResponse, error) {
 	// 從 metadata 取得 request-id
 	requestID, err := helper.GetRequestID(ctx)
 	if err != nil {
@@ -109,5 +108,6 @@ func (b BookingService) HandleThrottlingBooking(ctx context.Context, req *pb.Boo
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
+	return nil, nil
 
 }
