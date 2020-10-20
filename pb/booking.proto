@@ -5,12 +5,14 @@ package pb;
 service BookingService {
 
   // 表頭(Metadata)需要請求編號
-  // x-request-id
+  // e.g. grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleAsyncBooking
 
   // 同步的 Booking 請求
   rpc HandleSyncBooking (BookingRequest) returns (BookingSyncResponse);
   // 異步的 Booking 請求
   rpc HandleAsyncBooking (BookingRequest) returns (BookingASyncResponse);
+  // 節流的 Booking 請求
+  rpc HandleThrottlingBooking (BookingRequest) returns (BookingSyncResponse);
 }
 
 
