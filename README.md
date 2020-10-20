@@ -27,12 +27,14 @@
     - [實現 rollback 事件](#實現-rollback-事件)
     
 ## Quick Start
-本地啟動相關服務
+
 ````sh
     
     export OCH_PATH=$(pwd)
     cp app.dev.yaml app.yaml
+    go test ./... 
 
+    # 本地啟動相關服務
     cd deployment/local
     docker-compose up --build
 

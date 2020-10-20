@@ -34,8 +34,8 @@ func init()  {
 
 func Test_Sync(t *testing.T) {
 
-	//orchestrator := GetInstance()
-	//flow := orchestrator.GetSyncFlow(Facade("foo"))
-	//flow.Run("666")
+	orchestrator := GetInstance()
+	flow := orchestrator.GetSyncFlow(Facade("foo"))
+	flow.Run("666", nil, "test-req", "test-resp")
 
 }
