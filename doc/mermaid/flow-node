@@ -1,0 +1,6 @@
+graph TD
+  Start
+  A[Node - CreateOrder] --> B(Node - CratePayment)
+  B-- error happend -->C(Node - CancellBooking)
+  Start-->A
+  B-->Finish
