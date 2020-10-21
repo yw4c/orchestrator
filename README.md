@@ -56,7 +56,7 @@
 * 資料 response 以 callback 方式回覆
 
 ### 節流流程 (Throttling Flow)
-![seq-throttling](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgU2FnYUh5YnJpZApDbGllbnQtPkVuZHBvaW50OiDoqILllq7os4fmlpkgKGh0dHApCgAWCC0-T3JjaGVzdHJhdG9yABwQZ1JQQykKABYMLT5SZWRpczog55uj6IG95rWB56iL5piv5ZCm5a6M5oiQAB8PTVEAcBBwdWJsaXNoKQpNUQBfHmNvbnN1bWUAcBBPcmRlAIEQGWRlABgK5bu656uLAIF3BgARCgCBYQxPSwCBRh3kv67mlLkAgV0G54K65beyAIFcBwCBfgUAgikRp7jnmbwAgh4PAIJ7CgBiCgCCcQoAgyUGAIECBgCDEQY&s=roundgreen)
+![seq-throttling](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgVGhyb3R0bGluZwpDbGllbnQtPkVuZHBvaW50OiDoqILllq7os4fmlpkgKGh0dHApCgAWCC0-T3JjaGVzdHJhdG9yABwQZ1JQQykKABYMACAQ55uj6IG95rWB56iL5piv5ZCm5a6M5oiQACYPTVEAdxBwdWJsaXNoKQpNUQBmHmNvbnN1bWUAdRJkZQCBFxlkZQAYCuW7uueriwCBfgYAEQoAgWISSUQAgUwk5L-u5pS5AIFqBueCuuW3sgCBWxUAgm0QAFMKAIJvCgCDIwYAcwwAgxUG&s=roundgreen)
 * 使用 MQ 透過 Queue 與控制 Concurrency 數，改善同步流程造成 upstream 過載情形，達成 熔斷, retry, rate limit 無法做到的確保執行。
 * 將請求連線 lock 住，後續異步執行。
 * orchestrator 有多個 replica , 所以我們須 watch redis 流程是否已完成。
