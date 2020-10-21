@@ -10,31 +10,31 @@ import (
 // 同步的事務流程
 type ISyncFlow interface {
 	// 將䩞點依序加入
-	Use(syncHandler SyncHandler) ISyncFlow
+	Use(syncNode SyncNode) ISyncFlow
 	// 執行事務流程
 	Run(requestID string, requestParam interface{}, reqKey FlowContextKeyReq, respKey FlowContextKeyResp)(response interface{}, err error)
 	IFlow
 }
 
 // 同步的事務節點
-type SyncHandler func(requestID string, ctx *ctx.Context) error
+type SyncNode func(requestID string, ctx *ctx.Context) error
 // 從 Context 取得 Request Value 的 Key
 type FlowContextKeyReq string
 // 從 Context 取得 Response Value 的 Key
 type FlowContextKeyResp string
 
 type SyncFlow struct {
-	handlers      []SyncHandler
+	nodes         []SyncNode
 	rollbackTopic Topic
 }
 
-func (s *SyncFlow) ConsumeRollback(rollback *TopicRollbackHandlerPair) {
-	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Handler)
+func (s *SyncFlow) ConsumeRollback(rollback *TopicRollbackNodePair) {
+	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Node)
 	s.rollbackTopic = rollback.Topic
 }
 
-func (s *SyncFlow) Use(syncHandler SyncHandler) ISyncFlow {
-	s.handlers = append(s.handlers, syncHandler)
+func (s *SyncFlow) Use(syncNode SyncNode) ISyncFlow {
+	s.nodes = append(s.nodes, syncNode)
 	return s
 }
 
@@ -47,7 +47,7 @@ func (s *SyncFlow) Run(requestID string, requestParam interface{}, reqKey FlowCo
 	context := &ctx.Context{}
 	context.Set(string(reqKey), requestParam)
 
-	for _,v := range s.handlers {
+	for _,v := range s.nodes {
 		if err := v(requestID, context); err != nil {
 
 			// 發生錯誤，發送 Rollback Topic 給 MQ
@@ -71,7 +71,7 @@ func (s *SyncFlow) Run(requestID string, requestParam interface{}, reqKey FlowCo
 
 func NewSyncFlow() ISyncFlow {
 	return &SyncFlow{
-		handlers: nil,
+		nodes: nil,
 	}
 }
 

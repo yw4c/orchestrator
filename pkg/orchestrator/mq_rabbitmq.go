@@ -67,7 +67,7 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 
 
 // Exchange -> Binding -> Queues -> Consumer
-func (r *RabbitMQ) ListenAndConsume(topicID Topic, handler AsyncHandler) {
+func (r *RabbitMQ) ListenAndConsume(topicID Topic, node AsyncNode) {
 
 	topic := topicID.GetTopicName()
 
@@ -137,7 +137,7 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, handler AsyncHandler) {
 			panic(err.Error())
 		}
 
-		go func(msgs <-chan amqp.Delivery, handler AsyncHandler, consumerName string) {
+		go func(msgs <-chan amqp.Delivery, node AsyncNode, consumerName string) {
 
 			// Panic recover
 			defer func() {
@@ -156,18 +156,18 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, handler AsyncHandler) {
 					Str("body", string(d.Body)).
 					Msg("Consumer Access Log")
 
-				handler(topicID, d.Body, getNextFunc(), getRollbackFunc())
+				node(topicID, d.Body, getNextFunc(), getRollbackFunc())
 
 				d.Ack(false)
 
 			}
-		}(msgs, handler, consumerName)
+		}(msgs, node, consumerName)
 
 	}
 
 }
 
-func (r *RabbitMQ) ConsumeRollback(topicID Topic, handler RollbackHandler) {
+func (r *RabbitMQ) ConsumeRollback(topicID Topic, node RollbackNode) {
 
 	topic := topicID.GetTopicName()
 
@@ -237,7 +237,7 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, handler RollbackHandler) {
 			panic(err.Error())
 		}
 
-		go func(msgs <-chan amqp.Delivery, handler RollbackHandler) {
+		go func(msgs <-chan amqp.Delivery, node RollbackNode) {
 
 			// Panic recover
 			defer func() {
@@ -255,11 +255,11 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, handler RollbackHandler) {
 					Str("body", string(d.Body)).
 					Msg("Consumer Access Log")
 
-				handler(topicID, d.Body)
+				node(topicID, d.Body)
 
 				d.Ack(false)
 			}
-		}(msgs, handler)
+		}(msgs, node)
 	}
 
 }

@@ -9,8 +9,8 @@ import (
 
 type MQ interface {
 	Produce(topic Topic, message []byte)
-	ListenAndConsume(topic Topic, handler AsyncHandler)
-	ConsumeRollback(topic Topic, handler RollbackHandler)
+	ListenAndConsume(topic Topic, node AsyncNode)
+	ConsumeRollback(topic Topic, node RollbackNode)
 }
 
 var mq MQ

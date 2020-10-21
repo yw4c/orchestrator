@@ -11,7 +11,7 @@ import (
 	"net"
 	"orchestrator/facade"
 	"orchestrator/pb"
-	"orchestrator/service"
+	"orchestrator/handler"
 	"runtime/debug"
 )
 
@@ -54,7 +54,7 @@ func main() {
 
 
 	// Bind gRPC endpoints under here
-	pb.RegisterBookingServiceServer(grpcSvc, &service.BookingService{})
+	pb.RegisterBookingServiceServer(grpcSvc, &handler.BookingService{})
 
 	reflection.Register(grpcSvc)
 

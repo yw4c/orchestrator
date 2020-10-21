@@ -1,7 +1,7 @@
 package facade
 
 import (
-	"orchestrator/handler"
+	"orchestrator/node"
 	"orchestrator/pkg/orchestrator"
 	"orchestrator/topic"
 )
@@ -17,19 +17,19 @@ const (
 func RegisterAsyncBookingFlows() {
 
 	// 建立訂單
-	createOrderPair := orchestrator.TopicHandlerPair{
-		Topic:        topic.CreateOrder,
-		AsyncHandler: handler.CreateOrderAsync(),
+	createOrderPair := orchestrator.TopicNodePair{
+		Topic:     topic.CreateOrder,
+		AsyncNode: node.CreateOrderAsync(),
 	}
 	// 建立付款單
-	createPaymentPair := orchestrator.TopicHandlerPair{
-		Topic:        topic.CreatePayment,
-		AsyncHandler: handler.CreatePaymentAsync(),
+	createPaymentPair := orchestrator.TopicNodePair{
+		Topic:     topic.CreatePayment,
+		AsyncNode: node.CreatePaymentAsync(),
 	}
 	// Rollback
-	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
-		Topic:        topic.CancelAsyncBooking,
-		Handler: handler.CancelBooking(),
+	rollbackPair := &orchestrator.TopicRollbackNodePair{
+		Topic: topic.CancelAsyncBooking,
+		Node:  node.CancelBooking(),
 	}
 
 	// 建立流程
@@ -51,13 +51,13 @@ func RegisterAsyncBookingFlows() {
 func RegisterSyncBookingFlow() {
 	// 建立流程
 	flow := orchestrator.NewSyncFlow()
-	flow.Use(handler.CreateOrderSync()).
-		Use(handler.CreatePaymentSync())
+	flow.Use(node.CreateOrderSync()).
+		Use(node.CreatePaymentSync())
 
 	// 開始監聽 rollback Topic
-	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
-		Topic:        topic.CancelSyncBooking,
-		Handler: handler.CancelBooking(),
+	rollbackPair := &orchestrator.TopicRollbackNodePair{
+		Topic: topic.CancelSyncBooking,
+		Node:  node.CancelBooking(),
 	}
 	flow.ConsumeRollback(rollbackPair)
 
@@ -68,19 +68,19 @@ func RegisterSyncBookingFlow() {
 func RegisterThrottlingBookingFlow()  {
 
 	// 建立訂單
-	createOrderPair := orchestrator.TopicHandlerPair{
-		Topic:        topic.CreateOrderThrottling,
-		AsyncHandler: handler.CreateOrderAsync(),
+	createOrderPair := orchestrator.TopicNodePair{
+		Topic:     topic.CreateOrderThrottling,
+		AsyncNode: node.CreateOrderAsync(),
 	}
 	// 建立付款單
-	createPaymentPair := orchestrator.TopicHandlerPair{
-		Topic:        topic.CreatePaymentThrottling,
-		AsyncHandler: handler.CreatePaymentAsync(),
+	createPaymentPair := orchestrator.TopicNodePair{
+		Topic:     topic.CreatePaymentThrottling,
+		AsyncNode: node.CreatePaymentAsync(),
 	}
 	// Rollback
-	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
-		Topic:        topic.CancelAsyncBooking,
-		Handler: handler.CancelBooking(),
+	rollbackPair := &orchestrator.TopicRollbackNodePair{
+		Topic: topic.CancelAsyncBooking,
+		Node:  node.CancelBooking(),
 	}
 
 	flow := orchestrator.NewThrottlingFlow(topic.CancelThrottlingBooking)

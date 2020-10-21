@@ -10,8 +10,8 @@ import (
 
 // 異步的事務流程
 type IAsyncFlow interface {
-	// 註冊 Topic 與對應的 事務節點(AsyncHandler)，有順序性
-	Use(TopicHandlerPair TopicHandlerPair) IAsyncFlow
+	// 註冊 Topic 與對應的 事務節點(AsyncNode)，有順序性
+	Use(TopicNodePair TopicNodePair) IAsyncFlow
 	// 開始準備接收 MQ 訊息
 	Consume()
 	// 執行事務流程
@@ -21,22 +21,22 @@ type IAsyncFlow interface {
 }
 
 // 異步的事務節點
-type AsyncHandler func(topic Topic, data []byte, next Next, rollback Rollback)
+type AsyncNode func(topic Topic, data []byte, next Next, rollback Rollback)
 // 進行下一個事務節點
 type Next func(context IAsyncFlowContext)
 // 執行 Rollback：記錄錯誤日誌、推送 Rollback Topic
 type Rollback func(err error, context IAsyncFlowContext)
 // Rollback的事務節點
-type RollbackHandler func(topic Topic, data []byte)
+type RollbackNode func(topic Topic, data []byte)
 
 // 一個 Topic 對應 一個 事務節點
-type TopicHandlerPair struct {
-	Topic        Topic
-	AsyncHandler AsyncHandler
+type TopicNodePair struct {
+	Topic     Topic
+	AsyncNode AsyncNode
 }
-type TopicRollbackHandlerPair struct {
-	Topic   Topic
-	Handler RollbackHandler
+type TopicRollbackNodePair struct {
+	Topic Topic
+	Node  RollbackNode
 }
 
 
@@ -48,38 +48,38 @@ func rollback(topic Topic, requestID string) {
 
 type AsyncFlow struct {
 	// 一個 Topic 對應一個事務
-	handlers      []TopicHandlerPair
+	pairs         []TopicNodePair
 	rollbackTopic Topic
 }
 
-func (s *AsyncFlow) ConsumeRollback(rollback *TopicRollbackHandlerPair) {
-	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Handler)
+func (s *AsyncFlow) ConsumeRollback(rollback *TopicRollbackNodePair) {
+	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Node)
 	s.rollbackTopic = rollback.Topic
 }
 
 func (s *AsyncFlow) Consume() {
-	if len(s.handlers) == 0 {
+	if len(s.pairs) == 0 {
 		return
 	}
 	mq := GetMQInstance()
-	for _, v := range s.handlers {
-		mq.ListenAndConsume(v.Topic, v.AsyncHandler)
+	for _, v := range s.pairs {
+		mq.ListenAndConsume(v.Topic, v.AsyncNode)
 	}
 }
 
-func (s *AsyncFlow) Use(TopicHandlerPair TopicHandlerPair) IAsyncFlow {
-	s.handlers = append(s.handlers, TopicHandlerPair)
+func (s *AsyncFlow) Use(TopicNodePair TopicNodePair) IAsyncFlow {
+	s.pairs = append(s.pairs, TopicNodePair)
 	return s
 }
 
 func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowContext) (err error){
-	if len(s.handlers) == 0 {
+	if len(s.pairs) == 0 {
 		return
 	}
 
 	// 蒐集 topics
 	var topics []Topic
-	for _, v := range s.handlers {
+	for _, v := range s.pairs {
 		topics = append(topics, v.Topic)
 	}
 
@@ -96,14 +96,14 @@ func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowContext) (err e
 	}
 
 	// 開始推播給第一個事務
-	GetMQInstance().Produce(s.handlers[0].Topic, data)
+	GetMQInstance().Produce(s.pairs[0].Topic, data)
 	return    nil
 }
 
 func NewAsyncFlow(rollbackTopic Topic) *AsyncFlow {
 	return &AsyncFlow{
-		handlers: nil,
-		rollbackTopic:rollbackTopic,
+		pairs:         nil,
+		rollbackTopic: rollbackTopic,
 	}
 }
 

@@ -11,7 +11,7 @@ const throttlingTimeout = 60
 // 節流的事務流程
 type IThrottlingFlow interface {
 	// 將䩞點依序加入
-	Use(TopicHandlerPair TopicHandlerPair) IAsyncFlow
+	Use(TopicNodePair TopicNodePair) IAsyncFlow
 	// 執行事務流程
 	Run(requestID string,  requestParam IAsyncFlowContext)(response interface{}, err error)
 	IFlow
@@ -20,8 +20,8 @@ type IThrottlingFlow interface {
 func NewThrottlingFlow(rollbackTopic Topic) *ThrottlingFlow {
 	return &ThrottlingFlow{
 		AsyncFlow: &AsyncFlow{
-			handlers: nil,
-			rollbackTopic:rollbackTopic,
+			pairs:         nil,
+			rollbackTopic: rollbackTopic,
 		},
 	}
 }
@@ -31,13 +31,13 @@ type ThrottlingFlow struct {
 }
 
 func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (response interface{}, err error) {
-	if len(t.handlers) == 0 {
+	if len(t.pairs) == 0 {
 		return
 	}
 
 	// 蒐集 topics
 	var topics []Topic
-	for _, v := range t.handlers {
+	for _, v := range t.pairs {
 		topics = append(topics, v.Topic)
 	}
 
@@ -54,7 +54,7 @@ func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (
 	}
 
 	// 開始推播給第一個事務
-	GetMQInstance().Produce(t.handlers[0].Topic, data)
+	GetMQInstance().Produce(t.pairs[0].Topic, data)
 	response, err = Wait(requestID, throttlingTimeout*time.Second)
 	return
 

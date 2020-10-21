@@ -9,7 +9,7 @@ import (
 // simulate main process
 func init()  {
 	var (
-		handlerA, handlerB SyncHandler
+		handlerA, handlerB SyncNode
 	)
 
 	orchestrator := GetInstance()
