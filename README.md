@@ -66,6 +66,76 @@
 
 ## Task
 
+### 1. 實現事務節點
+* 在 ./node 下註冊節點
+#### 同步事務節點
+同步事務將 protobuf Msg 放進 Context 傳遞資料。我們定義 key 方便取得。
+```go
+const (
+	BookingSyncPbReq orchestrator.FlowContextKeyReq = "bookingSyncPbReq"
+	BookingSyncPbResp orchestrator.FlowContextKeyResp = "bookingSyncPbResp"
+)
+```
+取得參數：將 Request/Response 從 context 取出，轉回 protobuf 物件
+```go
+func CreateOrderSync() orchestrator.SyncNode {
+	return func(requestID string, ctx *ctx.Context) error {
+        // 從 Context 取出 gRPC Request
+        if req, isExist := ctx.Get(string(BookingSyncPbReq)) ; isExist {
+            if request, ok := req.(*pb.BookingRequest); ok {  
+```
+處理 Return: 將取得的資料放入Context 繼續傳遞
+```go
+    resp := &pb.BookingSyncResponse{
+        RequestID:            requestID,
+        OrderID:              mockOrderID,
+        PaymentID:            0,
+    }
+    ctx.Set(string(BookingSyncPbResp), resp)
+```
+#### 異步事務節點
+定義 flow 傳遞資料的物件，需繼承 ``` *orchestrator.AsyncFlowContext ```
+```go
+type BookingMsgDTO struct {
+	//**** 請求參數 ****//
+	FaultInject bool
+	ProductID   int64 `json:"product_id"`
+	//**** 傳遞資料 ****//
+	OrderID int64 `json:"order_id"`
+	PaymentID int64 `json:"payment_id"`
+	*orchestrator.AsyncFlowContext
+}
+```
+使用 json 格式傳遞 Context
+```go
+func CreateOrderAsync() orchestrator.AsyncNode {
+	return func(topic orchestrator.Topic, data []byte, next orchestrator.Next, rollback orchestrator.Rollback) {
+```
+接收參數：將 json decode 取得 C
+```go
+		d := &BookingMsgDTO{}
+		if err := json.Unmarshal(data, d); err != nil {
+```
+調用 next() 將參數送給下一個節點
+```go
+d.PaymentID = mockPaymentID
+next(d)
+```
+發生錯誤調用 rollback()
+````go
+    if err := nil {
+        rollback(err, d)
+        return
+    }
+````
+
+
+* Example 請參考 [node](./node/booking.go)
+
+### 2. 註冊事務流程
+
+
+### 3. 調用事務流程
 
 ## Examples
 
