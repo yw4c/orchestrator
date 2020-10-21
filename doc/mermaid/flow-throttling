@@ -1,0 +1,14 @@
+graph TB
+    Gateway
+    MQ
+    Gateway-- 1. gRPC LoadBalancing -->pod1
+    Gateway-- 1. gRPC LoadBalancing --> pod2
+    pod1-- 2. pub topic.pod1 -->MQ
+    pod2-- 2. pub topic.pod2 -->MQ
+    MQ -- 3. sub topic.pod1 --> pod1
+    MQ -- 3. sub topic.pod2 --> pod2
+
+    subgraph orchestrator
+    pod1
+    pod2
+    end

@@ -1,0 +1,12 @@
+title Throttling
+Client->Endpoint: 訂單資料 (http)
+Endpoint->Orchestrator: 訂單資料 (gRPC)
+Orchestrator->Orchestrator: 監聽流程是否完成
+Orchestrator->MQ: 訂單資料 (publish)
+MQ->Orchestrator: 訂單資料 (consume)
+Orchestrator->Order: 訂單資料 (gRPC)
+Order->Order: 建立訂單
+Order->Orchestrator: 訂單ID (gRPC)
+Orchestrator->Orchestrator: 修改流程為已完成
+Orchestrator->Endpoint: 訂單ID (gRPC)
+Endpoint->Client: 訂單ID (http)

@@ -1,0 +1,16 @@
+title Rollback
+Client->Endpoint: 訂單資料 (http)
+Endpoint->Orchestrator: 訂單資料 (gRPC)
+Orchestrator->Order: 訂單資料 (gRPC)
+Order->Order: 建立訂單
+Order->Orchestrator: 訂單編號 (gRPC)
+Orchestrator->Payment: 訂單編號 (gRPC)
+Payment->Payment: 建立收款單失敗
+Payment->Orchestrator: error (gRPC)
+Orchestrator->MQ: traceID (publish)
+MQ->Orchestrator: traceID (consume)
+Orchestrator->Order: traceID (gRPC)
+Order->Order: 取消訂單
+Order->Orchestrator: OK (gRPC)
+Orchestrator->Endpoint: error (gRPC)
+Endpoint->Client: error (http)

@@ -159,7 +159,7 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, handler AsyncHandler) {
 				handler(topicID, d.Body, getNextFunc(), getRollbackFunc())
 
 				d.Ack(false)
-				log.Info().Msg("finish")
+
 			}
 		}(msgs, handler, consumerName)
 

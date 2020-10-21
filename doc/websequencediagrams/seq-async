@@ -1,0 +1,11 @@
+title SagaAsync
+Client->Endpoint: 訂單資料 (http)
+Endpoint->Orchestrator: 訂單資料 (gRPC)
+Orchestrator->MQ: 訂單資料 (publish)
+Orchestrator->Endpoint: OK (gRPC)
+Endpoint->Client: OK (http)
+MQ->Orchestrator: 訂單資料 (consume)
+Orchestrator->Order: 訂單資料 (gRPC)
+Order->Order: 建立訂單
+Order->Client: Callback (http)
+Order->Orchestrator: OK (gRPC)
