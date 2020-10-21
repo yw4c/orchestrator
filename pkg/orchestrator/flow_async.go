@@ -149,6 +149,12 @@ func getRollbackFunc() Rollback {
 			Str("error", err.Error()).
 			Msgf("Trigger Rollback : %s", context.GetRollbackTopic())
 
+		// Throttling 模式, 通知 reqwait 任務已完成。並傳回 error
+		currentTopic := context.GetTopics()[context.GetCurrentIndex()]
+		if currentTopic.GetIsThrottling() {
+			TaskFinished(context.GetRequestID(), err)
+		}
+
 		// trigger rollback
 		rollback(context.GetRollbackTopic(), context.GetRequestID())
 	}

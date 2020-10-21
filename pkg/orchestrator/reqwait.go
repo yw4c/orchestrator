@@ -22,6 +22,8 @@ func Wait(requestID string, timeout time.Duration) (dto IAsyncFlowContext, err e
 			// convert to IAsyncFlowContext
 			if d, ok := data.(IAsyncFlowContext); ok {
 				dto = d
+			} else if e, ok := data.(error); ok { // convert to error
+				err = e
 			} else {
 				err = eris.Wrap(pkgerror.ErrInternalError, "convert to IAsyncFlowContext failed ")
 			}
@@ -43,6 +45,6 @@ func Wait(requestID string, timeout time.Duration) (dto IAsyncFlowContext, err e
 
 }
 
-func TaskFinished(requestID string, dto IAsyncFlowContext) {
-	FinishedRequests.Store(requestID, dto)
+func TaskFinished(requestID string, resp interface{}) {
+	FinishedRequests.Store(requestID, resp)
 }
