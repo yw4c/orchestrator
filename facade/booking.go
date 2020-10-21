@@ -9,6 +9,7 @@ import (
 const (
 	AsyncBooking orchestrator.Facade = "AsyncBooking"
 	SyncBooking orchestrator.Facade = "SyncBooking"
+	ThrottlingBooking orchestrator.Facade = "ThrottlingBooking"
 )
 
 
@@ -62,4 +63,32 @@ func RegisterSyncBookingFlow() {
 
 	// 註冊流程
 	orchestrator.GetInstance().SetSyncFlows(SyncBooking, flow)
+}
+
+func RegisterThrottlingBookingFlow()  {
+
+	// 建立訂單
+	createOrderPair := orchestrator.TopicHandlerPair{
+		Topic:        topic.CreateOrderThrottling,
+		AsyncHandler: handler.CreateOrderAsync(),
+	}
+	// 建立付款單
+	createPaymentPair := orchestrator.TopicHandlerPair{
+		Topic:        topic.CreatePaymentThrottling,
+		AsyncHandler: handler.CreatePaymentAsync(),
+	}
+	// Rollback
+	rollbackPair := &orchestrator.TopicRollbackHandlerPair{
+		Topic:        topic.CancelAsyncBooking,
+		Handler: handler.CancelBooking(),
+	}
+
+	flow := orchestrator.NewThrottlingFlow(topic.CancelThrottlingBooking)
+	flow.Use(createOrderPair)
+	flow.Use(createPaymentPair)
+	flow.ConsumeRollback(rollbackPair)
+	flow.Consume()
+
+	orchestrator.GetInstance().SetThrottlingFlows(ThrottlingBooking, flow)
+
 }

@@ -17,12 +17,20 @@ type IThrottlingFlow interface {
 	IFlow
 }
 
-
-type ThrottlingFlow struct {
-	AsyncFlow
+func NewThrottlingFlow(rollbackTopic Topic) *ThrottlingFlow {
+	return &ThrottlingFlow{
+		AsyncFlow: &AsyncFlow{
+			handlers: nil,
+			rollbackTopic:rollbackTopic,
+		},
+	}
 }
 
-func (t ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (response interface{}, err error) {
+type ThrottlingFlow struct {
+	*AsyncFlow
+}
+
+func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (response interface{}, err error) {
 	if len(t.handlers) == 0 {
 		return
 	}
@@ -48,9 +56,6 @@ func (t ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (r
 	// 開始推播給第一個事務
 	GetMQInstance().Produce(t.handlers[0].Topic, data)
 	response, err = Wait(requestID, throttlingTimeout*time.Second)
-	if err != nil {
-		return
-	}
 	return
 
 }

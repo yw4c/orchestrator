@@ -9,9 +9,11 @@ type IOrchestrator interface {
 	// 註冊事務流程
 	SetSyncFlows(facade Facade, flow ISyncFlow)
 	SetAsyncFlows(facade Facade, flow IAsyncFlow)
+	SetThrottlingFlows(facade Facade, flow IThrottlingFlow)
 	// 用 facade 領取事務流程
 	GetSyncFlow(facade Facade) ISyncFlow
 	GetAsyncFlow(facade Facade) IAsyncFlow
+	GetThrottlingFlows(facade Facade) IThrottlingFlow
 }
 
 // 用 facade 領取事務流程
@@ -30,6 +32,7 @@ func GetInstance() IOrchestrator {
 		c:= &Orchestrator{
 			registeredSyncFlows: make(map[Facade]ISyncFlow),
 			registeredAsyncFlows: make(map[Facade]IAsyncFlow),
+			registeredThrottlingFlows: make(map[Facade]IThrottlingFlow),
 		}
 		instance = c
 	})
@@ -42,6 +45,8 @@ type Orchestrator struct {
 	syncFlowMu          sync.RWMutex
 	registeredAsyncFlows map[Facade]IAsyncFlow
 	asyncFlowMu          sync.RWMutex
+	registeredThrottlingFlows map[Facade]IThrottlingFlow
+	throttlingFlowMu sync.RWMutex
 }
 
 func (o *Orchestrator) SetAsyncFlows(facade Facade, flow IAsyncFlow) {
@@ -70,3 +75,15 @@ func (o *Orchestrator) GetSyncFlow(facade Facade) ISyncFlow {
 	return nil
 }
 
+func (o *Orchestrator) SetThrottlingFlows(facade Facade, flow IThrottlingFlow) {
+	o.throttlingFlowMu.Lock()
+	o.registeredThrottlingFlows[facade] = flow
+	o.throttlingFlowMu.Unlock()
+}
+
+func (o *Orchestrator) GetThrottlingFlows(facade Facade) IThrottlingFlow {
+	if flow, ok := o.registeredThrottlingFlows[facade] ; ok {
+		return flow
+	}
+	return nil
+}

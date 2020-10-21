@@ -6,10 +6,18 @@ import (
 
 
 const (
-	CreateOrder        orchestrator.Topic = "create_order"
+
+	// Sync
+	CancelSyncBooking  orchestrator.Topic = "cancel_sync_booking"
+
+	// Async
+	CreateOrder         = "create_order"
 	CreatePayment       = "create_payment"
 	CancelAsyncBooking  = "cancel_async_booking"
-	CancelSyncBooking   = "cancel_sync_booking"
-	CreateOrderThrottling = "create_order_throttling"
+
+	// Throttling
+	CreateOrderThrottling 	= "create_order_throttling"
 	CreatePaymentThrottling = "create_payment_throttling"
+	CancelThrottlingBooking = "cancel_throttling_booking"
+
 )

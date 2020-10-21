@@ -20,6 +20,7 @@ func main() {
 	// 註冊事務流程
 	facade.RegisterAsyncBookingFlows()
 	facade.RegisterSyncBookingFlow()
+	facade.RegisterThrottlingBookingFlow()
 
 
 	// gRPC Connection

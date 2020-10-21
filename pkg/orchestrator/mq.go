@@ -32,7 +32,7 @@ func (id Topic) GetTopicName() string {
 	for _,v := range config.GetConfigInstance().MessageQueue.Topics {
 		if string(id) == v.ID {
 			name = v.ID
-			if v.IOSame {
+			if v.IsThrottling {
 				name = os.ExpandEnv(name+".$POD_ID")
 			}
 			return prefix+name
@@ -48,4 +48,13 @@ func (id Topic) GetConcurrency() int {
 		}
 	}
 	return 1
+}
+
+func (id Topic) GetIsThrottling() bool {
+	for _,v := range config.GetConfigInstance().MessageQueue.Topics {
+		if string(id) == v.ID {
+			return v.IsThrottling
+		}
+	}
+	return false
 }

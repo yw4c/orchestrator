@@ -32,7 +32,7 @@ type config struct {
 
 type Topic struct {
 	// mq server 註冊的 topic 名稱
-	IOSame bool `mapstructure:"io_same"`
+	IsThrottling bool `mapstructure:"is_throttling"`
 	// unique name
 	ID string `mapstructure:"id"`
 	// 接收的併發數

@@ -14,17 +14,17 @@ engine:
 
 # Message Queue
 message_queue:
-  topic_prefix: topic_booking_dev.
+  topic_prefix: topic_booking_dev
   # Topics
   # - id : short name 對應 ./topic/topic.go
-  # - same_node_io: pub/sub 是否在同一程序, default : false
+  # - is_throttling: true: pub/sub 將會同路進出，並通知事務完成, default : false
   # - concurrency : 接收的併發數, default 1
   topics:
     - id: create_order_throttling
-      io_same: true
+      is_throttling: true
       concurrency: 100
     - id: create_payment_throttling
-      io_same: true
+      is_throttling: true
       concurrency: 100
 
 # app 連線對象

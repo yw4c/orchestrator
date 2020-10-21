@@ -127,6 +127,14 @@ func getNextFunc() Next{
 				return
 			}
 			GetMQInstance().Produce(nextTopic, nextData)
+		} else
+		// It's the last one
+		{
+			// Throttling 模式, 通知 reqwait 任務已完成。並傳回 Context DTO
+			currentTopic := d.GetTopics()[d.GetCurrentIndex()]
+			if currentTopic.GetIsThrottling() {
+				TaskFinished(d.GetRequestID(), d)
+			}
 		}
 	}
 }
