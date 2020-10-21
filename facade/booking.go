@@ -8,8 +8,8 @@ import (
 
 const (
 	AsyncBooking orchestrator.Facade = "AsyncBooking"
-	SyncBooking orchestrator.Facade = "SyncBooking"
-	ThrottlingBooking orchestrator.Facade = "ThrottlingBooking"
+	SyncBooking  = "SyncBooking"
+	ThrottlingBooking  = "ThrottlingBooking"
 )
 
 
