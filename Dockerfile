@@ -4,7 +4,7 @@ WORKDIR /app
 COPY / .
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
-RUN go build -ldflags="-X config.versionTag=$(git describe --tags)" -mod=vendor -v -o app main.go
+RUN go build -ldflags="-X config.versionTag=$(git describe --tags)" -mod=vendor -v -o orchestrator main.go
 
 
 ######### Container #########
@@ -13,7 +13,7 @@ RUN apk update && apk upgrade && \
     apk add --no-cache bash curl mysql-client redis
 RUN mkdir -p /app
 WORKDIR /app
-COPY --from=builder /app/app /app/app
+COPY --from=builder /app/orchestrator /app/orchestrator
 
 # Create appuser.
 ENV USER=appuser

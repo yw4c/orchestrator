@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orchestrator
+    version: generic
+  name: orchestrator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: orchestrator
+      version: generic
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+        version: generic
+    spec:
+      containers:
+        - env:
+            - name: OCH_PATH
+              value: /app
+          image: gcr.io/dabenxiang226/kbc_order:latest
+          imagePullPolicy: Always
+          name: orchestrator
+          command:
+            - ./orchestrator
+          ports:
+            - containerPort: 10000
+              name: grpc
+              protocol: TCP
+          resources: {}
+          readinessProbe:
+            exec:
+              command: ["nc", "127.0.0.1", "10000"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 6
+          volumeMounts:
+            - mountPath: /orchestrator/app.yaml
+              name: config
+              subPath: app.yaml
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: gcr
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: config
+          secret:
+            defaultMode: 420
+            secretName: orchestrator
+
+
