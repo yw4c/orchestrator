@@ -133,7 +133,7 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, node AsyncNode) {
 			q.Name,                    // queue
 			consumerName, // consumer
 			false,                     // auto-ack
-			false,                     // exclusive
+			rabbitmqExclusive,                     // exclusive
 			false,                     // no-local
 			false,                     // no-wait
 			nil,                       // args
@@ -204,7 +204,7 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, node RollbackNode) {
 		string(topic+"_queue"),    // name
 		true, // durable
 		false, // delete when unused
-		true,  // exclusive
+		rabbitmqExclusive,  // exclusive
 		false, // no-wait
 		nil,   // arguments
 	)
@@ -233,7 +233,7 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, node RollbackNode) {
 			q.Name,                    // queue
 			consumerName, // consumer
 			false,                     // auto-ack
-			false,                     // exclusive
+			rabbitmqExclusive,                     // exclusive
 			false,                     // no-local
 			false,                     // no-wait
 			nil,                       // args
