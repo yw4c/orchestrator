@@ -1,6 +1,8 @@
 image: docker:stable-dind
 ############### Variable ###############
-# $IMAGE_NAME e.g. gcr.io/foo/bar
+variables:
+  IMAGE_NAME: "gcr.io/dabenxiang226/kbc_gateway"
+# Secret Variables:
 # $RELEASE_CREDENTIALS : GCP Registry Credentials
 
 stages:
