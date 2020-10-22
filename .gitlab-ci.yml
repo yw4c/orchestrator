@@ -1,7 +1,7 @@
 image: docker:stable-dind
 ############### Variable ###############
 variables:
-  IMAGE_NAME: "gcr.io/dabenxiang226/kbc_gateway"
+  IMAGE_NAME: "gcr.io/dabenxiang226/orchestrator"
 # Secret Variables:
 # $RELEASE_CREDENTIALS : GCP Registry Credentials
 
