@@ -1,0 +1,39 @@
+image: docker:stable-dind
+############### Variable ###############
+# $IMAGE_NAME e.g. gcr.io/foo/bar
+# $RELEASE_CREDENTIALS : GCP Registry Credentials
+
+stages:
+  - build
+
+############### Build ###############
+build_image_job:
+  stage: build
+  image: google/cloud-sdk
+  tags:
+    - docker
+  only:
+    - dev
+    - master
+  script:
+    - docker version
+    - echo "$RELEASE_CREDENTIALS" > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file gcloud-service-key.json
+    - gcloud auth configure-docker
+    - docker build -t "$IMAGE_NAME:latest" .
+    - docker image push "$IMAGE_NAME:latest"
+
+build_prod_image_job_gen:
+  stage: build
+  image: google/cloud-sdk
+  tags:
+    - docker
+  only:
+    - tags
+  script:
+    - docker version
+    - echo "$RELEASE_CREDENTIALS" > gcloud-service-key.json
+    - gcloud auth activate-service-account --key-file gcloud-service-key.json
+    - gcloud auth configure-docker
+    - DOCKER_BUILDKIT=1 docker build --build-arg VERSION=$CI_COMMIT_TAG --build-arg COMMITSHA=$CI_COMMIT_SHA -f ./Dockerfile -t $IMAGE_NAME:$CI_COMMIT_TAG . --pull
+    - docker image push "$IMAGE_NAME:$CI_COMMIT_TAG"

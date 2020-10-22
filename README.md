@@ -26,6 +26,9 @@
     cd deployment/local
     docker-compose up --build
 
+    # 搓看看
+    grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleThrottlingBooking
+
 ````
     
 ## Structure

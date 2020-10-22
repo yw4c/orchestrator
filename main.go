@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/rs/zerolog/log"
@@ -16,6 +17,7 @@ import (
 )
 
 func main() {
+	fmt.Println("container initializing ... ")
 
 	// 註冊事務流程
 	facade.RegisterAsyncBookingFlows()
@@ -65,6 +67,7 @@ func main() {
 	}()
 
 	log.Info().Msg("gRPC Server Started ")
+	fmt.Println("container is ready ")
 
 	select {
 
