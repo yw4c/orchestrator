@@ -9,3 +9,10 @@ test_example:
 run_local:
 	docker build -t orchestrator:latest .
 	docker run orchestrator
+
+deploy-dev:
+	kubectl create ns orchestrator
+	kustomize build ./deployment/k8s/dev | kubectl apply -f - -n orchestrator
+
+deploy-relative:
+	helm install rabbitmq --set auth.username=guest,auth.password=guest bitnami/rabbitmq -n orchestrator

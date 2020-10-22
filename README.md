@@ -19,7 +19,7 @@
 ````sh
     
     export OCH_PATH=$(pwd)
-    cp app.dev.yaml app.yaml
+    cp ./deployment/k8s/dev/app.yaml app.yaml
     go test ./... 
 
     # 本地啟動相關服務

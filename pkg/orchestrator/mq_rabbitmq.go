@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+const(
+	durable = true
+	// 首次声明它的连接（Connection）可见
+	rabbitmqExclusive = false
+)
 
 // NewRabbitMQ 建立 pod 與 RabbitMQ 連線
 func NewRabbitMQ()*RabbitMQ {
@@ -97,9 +102,9 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, node AsyncNode) {
 	// Queue
 	q, err := channel.QueueDeclare(
 		string(topic+"_queue"),    // name
-		true, // durable
+		durable, // durable
 		false, // delete when unused
-		true,  // exclusive
+		rabbitmqExclusive,  // exclusive
 		false, // no-wait
 		nil,   // arguments
 	)

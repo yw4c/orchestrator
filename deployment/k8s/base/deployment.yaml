@@ -26,7 +26,7 @@ spec:
         - env:
             - name: OCH_PATH
               value: /app
-          image: gcr.io/dabenxiang226/kbc_order:latest
+          image: gcr.io/dabenxiang226/orchestrator:latest
           imagePullPolicy: Always
           name: orchestrator
           command:
@@ -35,15 +35,15 @@ spec:
             - containerPort: 10000
               name: grpc
               protocol: TCP
-          resources: {}
+          resources: { }
           readinessProbe:
             exec:
-              command: ["nc", "127.0.0.1", "10000"]
+              command: [ "nc", "127.0.0.1", "10000" ]
             initialDelaySeconds: 10
             periodSeconds: 30
             failureThreshold: 6
           volumeMounts:
-            - mountPath: /orchestrator/app.yaml
+            - mountPath: /app/app.yaml
               name: config
               subPath: app.yaml
       restartPolicy: Always
