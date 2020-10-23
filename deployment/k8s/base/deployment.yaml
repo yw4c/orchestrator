@@ -26,6 +26,10 @@ spec:
         - env:
             - name: OCH_PATH
               value: /app
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           image: gcr.io/dabenxiang226/orchestrator:latest
           imagePullPolicy: Always
           name: orchestrator

@@ -16,3 +16,6 @@ deploy-dev:
 
 deploy-relative:
 	helm install rabbitmq --set auth.username=guest,auth.password=guest bitnami/rabbitmq -n orchestrator
+
+undeploy-relative:
+	helm uninstall rabbitmq -n orchestrator

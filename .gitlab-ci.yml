@@ -14,9 +14,6 @@ build_image_job:
   image: google/cloud-sdk
   tags:
     - docker
-  only:
-    - dev
-    - master
   script:
     - docker version
     - echo "$RELEASE_CREDENTIALS" > gcloud-service-key.json

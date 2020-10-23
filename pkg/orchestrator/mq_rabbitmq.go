@@ -52,7 +52,7 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 	if err != nil {
 		panic(err.Error())
 	}
-	defer ch.Close()
+	//defer ch.Close()
 
 	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
