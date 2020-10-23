@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
@@ -8,6 +9,7 @@ import (
 	"orchestrator/pkg/ctx"
 	"orchestrator/pkg/orchestrator"
 	"orchestrator/pkg/pkgerror"
+	"orchestrator/pkg/pkggrpc"
 )
 
 /***********************************************************
@@ -39,6 +41,16 @@ func CreateOrderAsync() orchestrator.AsyncNode {
 			rollback(eris.Wrap(pkgerror.ErrInternalError, "json unmarshal fail"), d)
 			return
 		}
+
+		// hit burnner server
+		ctx := context.Background()
+		_, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
+		if err != nil {
+			e := pkgerror.ConvertFromGrpc(err)
+			rollback(eris.Wrap(e, err.Error()), d)
+		}
+
+
 		// 模擬建立訂單業務邏輯
 		var mockOrderID int64 = 11
 		d.OrderID = mockOrderID
@@ -100,6 +112,13 @@ func CreateOrderSync() orchestrator.SyncNode {
 		request, ok := req.(*pb.BookingRequest)
 		if !ok {
 			return eris.Wrap(pkgerror.ErrInternalError,"Convert Request to Protobuf DTO fail")
+		}
+
+		// hit burnner server
+		_, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
+		if err != nil {
+			e := pkgerror.ConvertFromGrpc(err)
+			return eris.Wrap(e, err.Error())
 		}
 
 		// 模擬建立訂單業務邏輯
