@@ -44,11 +44,12 @@ func CreateOrderAsync() orchestrator.AsyncNode {
 
 		// hit burnner server
 		ctx := context.Background()
-		_, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
+		resp, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
 		if err != nil {
 			e := pkgerror.ConvertFromGrpc(err)
 			rollback(eris.Wrap(e, err.Error()), d)
 		}
+		log.Info().Interface("burnner resp", resp).Msg("burnner")
 
 
 		// 模擬建立訂單業務邏輯
@@ -115,11 +116,12 @@ func CreateOrderSync() orchestrator.SyncNode {
 		}
 
 		// hit burnner server
-		_, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
+		r, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
 		if err != nil {
 			e := pkgerror.ConvertFromGrpc(err)
 			return eris.Wrap(e, err.Error())
 		}
+		log.Info().Interface("burnner resp", r).Msg("burnner")
 
 		// 模擬建立訂單業務邏輯
 		var mockOrderID int64 = 1

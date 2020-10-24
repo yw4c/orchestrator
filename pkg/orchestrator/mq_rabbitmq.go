@@ -50,7 +50,7 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 
 	ch, err := r.conn.Channel()
 	if err != nil {
-		panic(err.Error())
+			panic(err.Error())
 	}
 	//defer ch.Close()
 
