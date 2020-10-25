@@ -118,8 +118,9 @@ func CreateOrderSync() orchestrator.SyncNode {
 		// hit burnner server
 		r, err := pkggrpc.GetPingPongCliInstance().PingPongEndpoint(ctx, &pb.PingPong{Ping: 1})
 		if err != nil {
-			e := pkgerror.ConvertFromGrpc(err)
-			return eris.Wrap(e, err.Error())
+			//e := pkgerror.ConvertFromGrpc(err)
+			log.Error().Err(err).Msg("burn error")
+			return eris.Wrap(pkgerror.ErrInternalError, err.Error())
 		}
 		log.Info().Interface("burnner resp", r).Msg("burnner")
 
