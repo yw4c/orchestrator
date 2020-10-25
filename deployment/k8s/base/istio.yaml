@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: orchestrator
+  namespace: orchestrator
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "orchestrator.com.tw"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: path-rule
+  namespace: orchestrator
+spec:
+  gateways:
+    - orchestrator
+  hosts:
+    - "orchestrator.com.tw"
+  http:
+    - match:
+        - uri:
+            prefix: /booking
+      route:
+        - destination:
+            host: gateway
+            port:
+              number: 7001
