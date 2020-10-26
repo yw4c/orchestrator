@@ -40,6 +40,7 @@ func NewRabbitMQ()*RabbitMQ {
 }
 type RabbitMQ struct {
 	conn *amqp.Connection
+	producerChannel *amqp.Channel
 }
 
 
@@ -50,7 +51,8 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 
 	ch, err := r.conn.Channel()
 	if err != nil {
-			panic(err.Error())
+		log.Error().Err(err).Msg("producer get channel error, reconnect and get new channel")
+		ch, err = NewRabbitMQ().conn.Channel()
 	}
 	defer ch.Close()
 
