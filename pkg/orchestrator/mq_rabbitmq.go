@@ -32,6 +32,7 @@ func NewRabbitMQ()*RabbitMQ {
 		if err == nil {
 			break
 		}
+		mq.conn.Config.ChannelMax=10000
 		time.Sleep(time.Second)
 		log.Warn().Msg("rabbit mq dial retrying" )
 	}
@@ -40,7 +41,6 @@ func NewRabbitMQ()*RabbitMQ {
 }
 type RabbitMQ struct {
 	conn *amqp.Connection
-	producerChannel *amqp.Channel
 }
 
 
@@ -51,10 +51,9 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 
 	ch, err := r.conn.Channel()
 	if err != nil {
-		log.Error().Err(err).Msg("producer get channel error, reconnect and get new channel")
-		ch, err = NewRabbitMQ().conn.Channel()
+		panic(err.Error())
 	}
-	defer ch.Close()
+	//defer ch.Close()
 
 	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
