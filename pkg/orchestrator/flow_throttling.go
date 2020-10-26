@@ -6,7 +6,7 @@ import (
 	"orchestrator/pkg/pkgerror"
 	"time"
 )
-const throttlingTimeout = 60
+const throttlingTimeout = 180
 
 // 節流的事務流程
 type IThrottlingFlow interface {
