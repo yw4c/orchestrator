@@ -28,11 +28,13 @@ func NewRabbitMQ()*RabbitMQ {
 	var err error
 
 	for {
-		mq.conn, err = amqp.Dial(connQuery)
+		c := amqp.Config{
+			ChannelMax: 10000,
+		}
+		mq.conn, err = amqp.DialConfig(connQuery, c)
 		if err == nil {
 			break
 		}
-		mq.conn.Config.ChannelMax=10000
 		time.Sleep(time.Second)
 		log.Warn().Msg("rabbit mq dial retrying" )
 	}
