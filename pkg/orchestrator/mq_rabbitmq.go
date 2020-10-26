@@ -32,6 +32,13 @@ func NewRabbitMQ()*RabbitMQ {
 			ChannelMax: 10000,
 		}
 		mq.conn, err = amqp.DialConfig(connQuery, c)
+		if err != nil {
+			panic(err.Error())
+		}
+		mq.chanProducer, err = mq.conn.Channel()
+		if err != nil {
+			panic(err.Error())
+		}
 		if err == nil {
 			break
 		}
@@ -43,6 +50,7 @@ func NewRabbitMQ()*RabbitMQ {
 }
 type RabbitMQ struct {
 	conn *amqp.Connection
+	chanProducer *amqp.Channel
 }
 
 
@@ -50,16 +58,11 @@ type RabbitMQ struct {
 func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 
 	topic := topicID.GetTopicName()
-
-	ch, err := r.conn.Channel()
-	if err != nil {
-		panic(err.Error())
-	}
-	//defer ch.Close()
+	ch := r.chanProducer
 
 	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
-	err = ch.Publish(
+	err := ch.Publish(
 		string(topic+"_exchange"),     // exchange
 		string(topic), // routing key
 		false,  // mandatory
