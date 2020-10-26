@@ -11,7 +11,7 @@ import (
 )
 
 const(
-	durable = false
+	durable = true
 	// 首次声明它的连接（Connection）可见
 	rabbitmqExclusive = false
 )
