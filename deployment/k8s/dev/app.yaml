@@ -1,0 +1,40 @@
+# 產品環境 <dev,sit,prod>
+env: dev
+is_debug: true
+
+# app 對外服務
+server:
+  grpc:
+    port: 10050
+
+# 抽換服務
+engine:
+  # message queue 選用 <rabbit_mq, nats>
+  message_queue: rabbit_mq
+
+# Message Queue
+message_queue:
+  topic_prefix: topic_booking_dev
+  # Topics
+  # - id : short name 對應 ./topic/topic.go
+  # - is_throttling: true: pub/sub 將會同路進出，並通知事務完成, default : false
+  # - concurrency : 接收的併發數, default 1
+  topics:
+    - id: create_order_throttling
+      is_throttling: true
+      concurrency: 100
+    - id: create_payment_throttling
+      is_throttling: true
+      concurrency: 100
+
+# app 連線對象
+client:
+  rabbit_mq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+  nats:
+    cluster_id: "stan"
+    client_id: orchestrator
+    nats_url: "nats://nats:4222"
