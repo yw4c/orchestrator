@@ -35,6 +35,6 @@ client:
     username: guest
     password: guest
   nats:
-    cluster_id: "stan"
+    cluster_id: "stan-dev-cluster"
     client_id: orchestrator
-    nats_url: "nats://nats:4222"
+    nats_url: "nats://nats-dev-cluster.nats-cluster.svc:4222"

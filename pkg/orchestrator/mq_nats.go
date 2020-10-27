@@ -4,6 +4,7 @@ import (
 	"github.com/nats-io/stan.go"
 	"github.com/rs/zerolog/log"
 	"orchestrator/config"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"time"
@@ -132,7 +133,7 @@ func connectNats(opt ...stan.Option) (conn stan.Conn){
 	natsCnf := config.GetConfigInstance().Client.Nats
 	natsUrl := natsCnf.NatsUrl
 	clusterID := natsCnf.ClusterId
-	clientID := natsCnf.ClientId
+	clientID := natsCnf.ClientId+"_"+os.Getenv("POD_ID")
 
 	opt = append(opt, stan.NatsURL(natsUrl))
 	var err error
