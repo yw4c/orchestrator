@@ -26,6 +26,7 @@ type config struct {
 	Client struct {
 		Redis Redis
 		RabbitMQ RabbitMQ `mapstructure:"rabbit_mq"`
+		Nats Nats `mapstructure:"nats"`
 	}
 
 }
@@ -37,6 +38,12 @@ type Topic struct {
 	ID string `mapstructure:"id"`
 	// 接收的併發數
 	Concurrency int
+}
+
+type Nats struct {
+	ClusterId string `mapstructure:"cluster_id"`
+	ClientId string `mapstructure:"client_id"`
+	NatsUrl string `mapstructure:"nats_url"`
 }
 
 type RabbitMQ struct {

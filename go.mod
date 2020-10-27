@@ -7,6 +7,9 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/magiconair/properties v1.8.1
+	github.com/nats-io/nats-server/v2 v2.1.8 // indirect
+	github.com/nats-io/nats-streaming-server v0.18.0 // indirect
+	github.com/nats-io/stan.go v0.7.0
 	github.com/rotisserie/eris v0.4.1
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/viper v1.7.1

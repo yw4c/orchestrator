@@ -15,7 +15,9 @@ deploy-dev:
 	kustomize build ./deployment/k8s/dev | kubectl apply -f - -n orchestrator
 
 deploy-relative:
-	helm install rabbitmq --set auth.username=guest,auth.password=guest bitnami/rabbitmq -n orchestrator
+	#helm install rabbitmq --set auth.username=guest,auth.password=guest bitnami/rabbitmq -n orchestrator
+	helm install nats bitnami/nats -n orchestrator
 
 undeploy-relative:
-	helm uninstall rabbitmq -n orchestrator
+	#helm uninstall rabbitmq -n orchestrator
+	helm uninstall nats bitnami/nats -n orchestrator

@@ -48,6 +48,7 @@ func CreateOrderAsync() orchestrator.AsyncNode {
 		if err != nil {
 			e := pkgerror.ConvertFromGrpc(err)
 			rollback(eris.Wrap(e, err.Error()), d)
+			return
 		}
 		log.Info().Interface("burnner resp", resp).Msg("burnner")
 

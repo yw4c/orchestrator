@@ -19,6 +19,8 @@
 ````sh
     
     export OCH_PATH=$(pwd)
+    export POD_ID=local
+    
     cp ./deployment/k8s/dev/app.yaml app.yaml
     go test ./... 
 

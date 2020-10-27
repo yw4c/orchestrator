@@ -18,7 +18,7 @@ var onceMQ sync.Once
 
 func GetMQInstance() MQ {
 	onceMQ.Do(func() {
-		mq = NewRabbitMQ()
+		mq = NewNats()
 	})
 	return mq
 }

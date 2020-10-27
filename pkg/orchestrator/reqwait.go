@@ -41,6 +41,8 @@ func Wait(requestID string, timeout time.Duration) (dto IAsyncFlowContext, err e
 			err = eris.Wrap(pkgerror.ErrTimeout, "async flow handles it too long, let us cancel it")
 			return
 		}
+
+		time.Sleep(100*time.Millisecond)
 	}
 
 }
