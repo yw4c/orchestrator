@@ -113,19 +113,13 @@
 ### 1. 實現事務節點
 * 在 ./node 下註冊節點
 #### 同步事務節點
-同步事務將 gRPC response 物件放進 Context 傳遞資料。我們定義 key 方便取得。
-```go
-const (
-	BookingSyncPbReq orchestrator.FlowContextKeyReq = "bookingSyncPbReq"
-	BookingSyncPbResp  = "bookingSyncPbResp"
-)
-```
+
 取得參數：將 gRPC Request/Response 從 context 取出，轉回 protobuf 物件
 ```go
 func CreateOrderSync() orchestrator.SyncNode {
 	return func(requestID string, ctx *ctx.Context) error {
         // 從 Context 取出 gRPC Request
-        if req, isExist := ctx.Get(string(BookingSyncPbReq)) ; isExist {
+        if req, isExist := ctx.Get("bookingSyncPbReq") ; isExist {
             if request, ok := req.(*pb.BookingRequest); ok {  
 ```
 將處理後的資料放入 gRPC Response 再塞進 Context 繼續傳遞
@@ -135,7 +129,7 @@ func CreateOrderSync() orchestrator.SyncNode {
         OrderID:              mockOrderID,
         PaymentID:            0,
     }
-    ctx.Set(string(BookingSyncPbResp), resp)
+    ctx.Set("bookingSyncPbResp", resp)
 ```
 #### 異步事務節點
 定義 flow 傳遞資料的物件，需繼承 ``` *orchestrator.AsyncFlowContext ```
@@ -146,8 +140,8 @@ type BookingMsgDTO struct {
 	ProductID   int64 `json:"product_id"`
 	//**** 傳遞資料 ****//
 	OrderID int64 `json:"order_id"`
-	PaymentID int64 `json:"payment_id"`
-    //**** Context ****//
+	PaymentID int64 `json:"payment_id"` 
+	//**** Context ****//
 	*orchestrator.AsyncFlowContext
 }
 ```
