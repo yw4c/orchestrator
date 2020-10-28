@@ -8,7 +8,7 @@ import (
 
 
 type MQ interface {
-	Produce(topic Topic, message []byte)
+	Produce(topic Topic, message []byte) error
 	ListenAndConsume(topic Topic, node AsyncNode)
 	ConsumeRollback(topic Topic, node RollbackNode)
 }

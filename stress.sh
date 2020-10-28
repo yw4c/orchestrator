@@ -1,7 +1,7 @@
 iso8601=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 body=body-$iso8601.json
 
-echo 'GET http://104.199.184.127/booking/sync' | \
+echo 'GET http://104.199.184.127/booking/throttling' | \
     vegeta attack -rate 500 -duration 30s -header=""Host":"orchestrator.com.tw"" -timeout 10m | \
     tee ./reports/results-$iso8601.bin | vegeta encode | \
     jaggr @count=rps \

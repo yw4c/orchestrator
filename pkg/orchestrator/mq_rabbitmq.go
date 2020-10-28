@@ -2,9 +2,11 @@ package orchestrator
 
 import (
 	"fmt"
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
 	"github.com/streadway/amqp"
 	"orchestrator/config"
+	"orchestrator/pkg/pkgerror"
 	"runtime/debug"
 	"strconv"
 	"time"
@@ -55,14 +57,14 @@ type RabbitMQ struct {
 
 
 
-func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
+func (r *RabbitMQ) Produce(topicID Topic, message []byte) (err error) {
 
 	topic := topicID.GetTopicName()
 	ch := r.chanProducer
 
 	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
-	err := ch.Publish(
+	err = ch.Publish(
 		string(topic+"_exchange"),     // exchange
 		string(topic), // routing key
 		false,  // mandatory
@@ -72,8 +74,9 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) {
 			Body:        message,
 		})
 	if err != nil {
-		panic(err.Error())
+		err = eris.Wrap(pkgerror.ErrInternalError, err.Error())
 	}
+	return
 }
 
 

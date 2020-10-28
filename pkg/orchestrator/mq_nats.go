@@ -2,8 +2,10 @@ package orchestrator
 
 import (
 	"github.com/nats-io/stan.go"
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
 	"orchestrator/config"
+	"orchestrator/pkg/pkgerror"
 	"os"
 	"runtime/debug"
 	"strconv"
@@ -34,15 +36,16 @@ type Nats struct {
 	conn stan.Conn
 }
 
-func (n *Nats) Produce(topicID Topic, message []byte) {
+func (n *Nats) Produce(topicID Topic, message []byte) (err error) {
 	topic := topicID.GetTopicName()
 
 	log.Info().Str("topic", topic).Str("msg", string(message)).Msg("Producing Msg")
-	err := n.conn.Publish(topic, message)
+	err = n.conn.Publish(topic, message)
 
 	if err != nil {
-		panic(err.Error())
+		err = eris.Wrap(pkgerror.ErrInternalError, err.Error())
 	}
+	return
 }
 
 func (n *Nats) ListenAndConsume(topicID Topic, node AsyncNode) {

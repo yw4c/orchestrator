@@ -11,7 +11,7 @@ import (
 var FinishedRequests = &sync.Map{}
 
 func Wait(requestID string, timeout time.Duration) (dto IAsyncFlowContext, err error) {
-	log.Debug().Str("request ID", requestID).Msg("Waiting Task Finish")
+	log.Debug().Str("request ID", requestID).Msg("Waiting Task ")
 
 	timestamp := time.Now()
 
