@@ -17,8 +17,9 @@ type mockAsyncDTO struct {
 func TestReqWait_Wait(t *testing.T) {
 
 	var wg sync.WaitGroup
-	var concurrency = 10
-	var timeout = 1*time.Second
+	var concurrency = 100
+	var timeout = 10*time.Second
+	var finishedCount = 0
 	wg.Add(concurrency)
 
 	for i:= 1;i<=concurrency ;i++ {
@@ -40,10 +41,12 @@ func TestReqWait_Wait(t *testing.T) {
 					t.Fail()
 				}
 			}
-
+			finishedCount++
 			wg.Done()
 		}(i)
 	}
+
+
 
 	for i:=1; i<=concurrency; i++ {
 		reqId := "req"+strconv.Itoa(i)
@@ -60,9 +63,22 @@ func TestReqWait_Wait(t *testing.T) {
 		}
 
 		TaskFinished("req"+strconv.Itoa(i), dao)
+
+	}
+
+
+	for {
+		finishedRequestsWatcher.Broadcast()
+		time.Sleep(time.Second)
+		t.Log("finished count", finishedCount)
+		if finishedCount == 100 {
+			break
+		}
 	}
 
 	wg.Wait()
+
+
 }
 
 func TestReqWait_Wait_Timeout(t *testing.T) {
@@ -95,7 +111,8 @@ func TestReqWait_Wait_Timeout(t *testing.T) {
 	// mock timeout
 	time.Sleep(mockTimeout)
 	for i:=6; i<=10; i++ {
-		TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
+		finishedRequestsWatcher.Broadcast()
+		//TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
 	}
 
 	wg.Wait()
