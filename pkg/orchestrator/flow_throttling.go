@@ -54,8 +54,9 @@ func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (
 	}
 
 	// 開始推播給第一個事務
-	GetMQInstance().Produce(t.pairs[0].Topic, data)
-	response, err = Wait(requestID, throttlingTimeout*time.Second)
+	response, err = Wait(requestID, throttlingTimeout*time.Second, func() {
+		GetMQInstance().Produce(t.pairs[0].Topic, data)
+	})
 	return
 
 }

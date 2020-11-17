@@ -133,7 +133,11 @@ func getNextFunc() Next{
 			// Throttling 模式, 通知 reqwait 任務已完成。並傳回 Context DTO
 			currentTopic := d.GetTopics()[d.GetCurrentIndex()]
 			if currentTopic.GetIsThrottling() {
-				TaskFinished(d.GetRequestID(), d)
+				if err := TaskFinished(d.GetRequestID(), d); err != nil {
+					log.Error().Str("track", string(debug.Stack())).
+						Interface("context", d).
+						Msg("TaskFinished Error")
+				}
 			}
 		}
 	}
@@ -152,7 +156,10 @@ func getRollbackFunc() Rollback {
 		// Throttling 模式, 通知 reqwait 任務已完成。並傳回 error
 		currentTopic := context.GetTopics()[context.GetCurrentIndex()]
 		if currentTopic.GetIsThrottling() {
-			TaskFinished(context.GetRequestID(), err)
+			if e := TaskFinished(context.GetRequestID(), err);e != nil {
+				log.Error().Str("track", string(debug.Stack())).
+					Msg("TaskFinished Error")
+			}
 		}
 
 		// trigger rollback

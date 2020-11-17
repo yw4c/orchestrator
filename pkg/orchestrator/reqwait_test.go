@@ -27,8 +27,10 @@ func TestReqWait_Wait(t *testing.T) {
 		go func(i int) {
 			reqId := "req"+strconv.Itoa(i)
 
-			//  start waiting
-			data, err := Wait(reqId, timeout)
+			// start waiting
+			data, err := Wait(reqId, timeout, func() {
+				wg.Done()
+			})
 
 			if err != nil {
 				t.Log(err.Error())
@@ -42,42 +44,31 @@ func TestReqWait_Wait(t *testing.T) {
 				}
 			}
 			finishedCount++
-			wg.Done()
+
 		}(i)
 	}
-
-
-
-	for i:=1; i<=concurrency; i++ {
-		reqId := "req"+strconv.Itoa(i)
-
-		// mock Msg
-		dao := &mockAsyncDTO{
-			AsyncFlowContext: &AsyncFlowContext{
-				RollbackTopic: "rollback",
-				RequestID:     reqId,
-				CurrentIndex:  0,
-				Topics:        []Topic{"foo"},
-			},
-			foo: "bar",
-		}
-
-		TaskFinished("req"+strconv.Itoa(i), dao)
-
-	}
-
-
-	for {
-		finishedRequestsWatcher.Broadcast()
-		time.Sleep(time.Second)
-		t.Log("finished count", finishedCount)
-		if finishedCount == 100 {
-			break
-		}
-	}
-
 	wg.Wait()
+	t.Log("registered")
 
+	for finishedCount < concurrency {
+		t.Log(finishedCount)
+		for i:=1; i<=concurrency; i++ {
+			reqId := "req"+strconv.Itoa(i)
+
+			// mock Msg
+			dao := &mockAsyncDTO{
+				AsyncFlowContext: &AsyncFlowContext{
+					RollbackTopic: "rollback",
+					RequestID:     reqId,
+					CurrentIndex:  0,
+					Topics:        []Topic{"foo"},
+				},
+				foo: "bar",
+			}
+			TaskFinished("req"+strconv.Itoa(i), dao)
+		}
+		time.Sleep(time.Second)
+	}
 
 }
 
@@ -95,27 +86,34 @@ func TestReqWait_Wait_Timeout(t *testing.T) {
 		go func(i int) {
 			reqId := "req"+strconv.Itoa(i)
 			//  start waiting
-			_, err := Wait(reqId, timeout)
+			_, err := Wait(reqId, timeout, func() {
+				wg.Done()
+			})
 			if err != nil {
 				grpcErr := pkgerror.SetGRPCErrorResp("req"+strconv.Itoa(i), err)
 				t.Log(grpcErr.Error())
 				errCount++
 			}
-			wg.Done()
+
 		}(i)
 	}
+	wg.Wait()
 
 	for i:=1; i<=5; i++ {
-		TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
+		err := TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
+		if err != nil {
+			t.Log(err)
+			t.Fail()
+		}
 	}
 	// mock timeout
 	time.Sleep(mockTimeout)
 	for i:=6; i<=10; i++ {
-		finishedRequestsWatcher.Broadcast()
-		//TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
+		//finishedRequestsWatcher.Broadcast()
+		TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
 	}
 
-	wg.Wait()
+
 	t.Log("timeout request count: ", errCount)
 	assert.Equal(t, errCount, 5)
 }
