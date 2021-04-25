@@ -1,36 +1,22 @@
 version: "3"
-
 services:
-  ### RabbitMQ #############################################
-  rabbitmq:
-    build: rabbitmq
+  ### Nats #############################################
+  nats-streaming:
+    image: nats-streaming:0.21.2-alpine
     ports:
-      - "5672:5672"
-      - "15672:15672"
-      - "15671:15671"
-    privileged: true
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    hostname: laradock-rabbitmq
-    volumes:
-      - rabbitmq:/var/lib/rabbitmq
+      - "4222:4222"
+      - "8222:8222"
     networks:
       - backend
 
-  ### Redis ################################################
-#  redis:
-#    build: ./redis
-#    #      volumes:
-#    #        - ${DATA_PATH_HOST}/redis:/data
-#    ports:
-#      - "6379:6379"
-#    networks:
-#      - backend
+  ## Redis ################################################
+  redis:
+   image: redis:latest
+   ports:
+     - "6379:6379"
+   networks:
+     - backend
 
 networks:
   backend:
     driver: "bridge"
-volumes:
-  rabbitmq:
-    driver: local

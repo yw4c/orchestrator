@@ -22,12 +22,13 @@
     export OCH_PATH=$(pwd)
     export POD_ID=local
     
-    cp ./deployment/k8s/dev/app.yaml app.yaml
+    cp ./deployment/local/app.yaml app.yaml
     go test ./... 
 
     # 本地啟動相關服務
     cd deployment/local
     docker-compose up --build
+    go run main.go
 
     # 搓看看
     grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleThrottlingBooking

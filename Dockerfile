@@ -27,5 +27,3 @@ RUN adduser \
 
 RUN chown -R appuser:appuser /app
 USER appuser:appuser
-
-CMD ["sleep", "100000s"]
