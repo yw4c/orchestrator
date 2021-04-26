@@ -1,19 +1,21 @@
 package pkggrpc
 
 import (
-	"google.golang.org/grpc"
+	"orchestrator/config"
 	"orchestrator/pb"
 	"sync"
-)
 
-const targetGrpc = "burnner:10000"
+	"google.golang.org/grpc"
+)
 
 var pingPongCliOnce sync.Once
 var pingPongCli pb.PingPongServiceClient
 
 func GetPingPongCliInstance() pb.PingPongServiceClient {
-
+	burnnerCfg := config.GetConfigInstance().Client.Burnner
 	pingPongCliOnce.Do(func() {
+
+		targetGrpc := burnnerCfg.Host + ":" + burnnerCfg.Port
 		conn, err := grpc.Dial(targetGrpc, grpc.WithInsecure())
 		if err != nil {
 			panic(err.Error())

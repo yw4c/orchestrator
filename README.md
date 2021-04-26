@@ -30,7 +30,7 @@
     docker-compose up --build
     go run main.go
 
-    # 搓看看
+    # Hit it up
     grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleThrottlingBooking
 
 ````

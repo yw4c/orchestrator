@@ -38,3 +38,6 @@ client:
     cluster_id: "test-cluster"
     client_id: orchestrator
     nats_url: "nats://localhost:4222"
+  burnner-grpc:
+    host: 127.0.0.1
+    port: 13100

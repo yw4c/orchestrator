@@ -17,6 +17,16 @@ services:
    networks:
      - backend
 
+  ## Burnner ################################################
+  burnner:
+    image: yw4code/burnner:latest
+    ports:
+      - "13100:10000"
+    networks:
+      - backend
+    command:
+      - ./burnner
+
 networks:
   backend:
     driver: "bridge"

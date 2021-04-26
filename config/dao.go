@@ -2,33 +2,33 @@ package config
 
 type config struct {
 	//  產品環境 <dev,sit,prod>
-	Env string
+	Env     string
 	IsDebug bool `mapstructure:"is_debug"`
 	// app 對外服務
-	Server struct{
+	Server struct {
 		// gRPC
-		Grpc struct{
+		Grpc struct {
 			Port string
 		}
 	}
 	// 抽換服務
-	Engine struct{
+	Engine struct {
 		// message queue 選用 <rabbit_mq, nats>
-		MessageQueue string  `mapstructure:"message_queue"`
+		MessageQueue string `mapstructure:"message_queue"`
 	}
 	// Message Queue Topics
-	MessageQueue struct{
+	MessageQueue struct {
 		TopicPrefix string `mapstructure:"topic_prefix"`
-		Topics []Topic
+		Topics      []Topic
 	} `mapstructure:"message_queue"`
 
 	// app 連線對象
 	Client struct {
-		Redis Redis
+		Redis    Redis
 		RabbitMQ RabbitMQ `mapstructure:"rabbit_mq"`
-		Nats Nats `mapstructure:"nats"`
+		Nats     Nats     `mapstructure:"nats"`
+		Burnner  Burnner  `mapstructure:"burnner-grpc"`
 	}
-
 }
 
 type Topic struct {
@@ -42,26 +42,31 @@ type Topic struct {
 
 type Nats struct {
 	ClusterId string `mapstructure:"cluster_id"`
-	ClientId string `mapstructure:"client_id"`
-	NatsUrl string `mapstructure:"nats_url"`
+	ClientId  string `mapstructure:"client_id"`
+	NatsUrl   string `mapstructure:"nats_url"`
 }
 
 type RabbitMQ struct {
-	Host string
-	Port string
+	Host     string
+	Port     string
 	Username string
 	Password string
 }
 
 type Redis struct {
+	Host         string
+	Port         string
+	DB           int
+	PoolSize     int
+	MinIdleConn  int
+	DialTimeout  int
+	ReadTimeout  int
+	WriteTimeout int
+	PoolTimeout  int
+	IdleTimeout  int
+}
+
+type Burnner struct {
 	Host string
 	Port string
-	DB int
-	PoolSize int
-	MinIdleConn int
-	DialTimeout int
-	ReadTimeout int
-	WriteTimeout int
-	PoolTimeout int
-	IdleTimeout int
 }
