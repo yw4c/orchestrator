@@ -29,6 +29,11 @@ type config struct {
 		Nats     Nats     `mapstructure:"nats"`
 		Burnner  Burnner  `mapstructure:"burnner-grpc"`
 	}
+
+	Throttling struct {
+		Concurrency int
+		Enable      bool
+	}
 }
 
 type Topic struct {

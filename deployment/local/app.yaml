@@ -41,3 +41,7 @@ client:
   burnner-grpc:
     host: 127.0.0.1
     port: 13100
+
+throttling:
+  concurrency: 10 # 併發數
+  enable: false
