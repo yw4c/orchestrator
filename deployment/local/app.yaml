@@ -5,7 +5,7 @@ is_debug: true
 # app 對外服務
 server:
   grpc:
-    port: 10050
+    port: 10000
 
 # 抽換服務
 engine:

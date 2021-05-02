@@ -17,15 +17,31 @@ services:
    networks:
      - backend
 
-  ## Burnner ################################################
+  ## Burnner for test #########################################
+  # each request burns 10MB, we will observe loading of container
+  # orchestrator --gRPC--> burnner
   burnner:
     image: yw4code/burnner:latest
     ports:
       - "13100:10000"
+    mem_limit: 100m
     networks:
       - backend
     command:
       - ./burnner
+
+  ## HTTP Api for test #########################################
+  # cli --http--> och-api --gRPC--> orchestrator
+  och-api:
+    image: yw4code/och-api:latest
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+    environment:
+      - ORC_GRPC_ADDR=host.docker.internal:10000
+    command:
+      - ./och-api
 
 networks:
   backend:

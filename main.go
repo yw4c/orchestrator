@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
+	"net"
+	"orchestrator/config"
+	"orchestrator/facade"
+	"orchestrator/handler"
+	"orchestrator/pb"
+	"runtime/debug"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"net"
-	"orchestrator/facade"
-	"orchestrator/pb"
-	"orchestrator/handler"
-	"runtime/debug"
 )
 
 func main() {
@@ -24,21 +26,20 @@ func main() {
 	facade.RegisterSyncBookingFlow()
 	facade.RegisterThrottlingBookingFlow()
 
-
 	// gRPC Connection
-	lis, err := net.Listen("tcp", ":10000")
+	lis, err := net.Listen("tcp", ":"+config.GetConfigInstance().Server.Grpc.Port)
 	if err != nil {
 		log.Panic().Msg(err.Error())
 	}
 
 	// recover gRPC panic
-	var customFunc  grpc_recovery.RecoveryHandlerFunc
+	var customFunc grpc_recovery.RecoveryHandlerFunc
 	customFunc = func(p interface{}) (err error) {
 		log.Error().Interface("message", p).
 			Str("trace", string(debug.Stack())).
 			Msg("GRPC Recover")
 
-		return  status.Errorf(codes.Unknown, "[p010user] panic recovered: %v",p)
+		return status.Errorf(codes.Unknown, "[p010user] panic recovered: %v", p)
 	}
 	opts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandler(customFunc),
@@ -54,14 +55,13 @@ func main() {
 		),
 	)
 
-
 	// Bind gRPC endpoints under here
 	pb.RegisterBookingServiceServer(grpcSvc, &handler.BookingService{})
 
 	reflection.Register(grpcSvc)
 
 	go func() {
-		if err:= grpcSvc.Serve(lis); err!= nil {
+		if err := grpcSvc.Serve(lis); err != nil {
 			log.Panic().Msg(err.Error())
 		}
 	}()
@@ -69,8 +69,5 @@ func main() {
 	log.Info().Msg("gRPC Server Started ")
 	fmt.Println("container is ready ")
 
-	select {
-
-	}
+	select {}
 }
-

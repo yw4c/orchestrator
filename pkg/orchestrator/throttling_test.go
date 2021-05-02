@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-func TestThrottling(t *testing.T) {
-
+// go test -bench=. -run=^$ throttling_test.go throttling.go
+func Test_Throttling(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func(i int) {
-			Throttling(strconv.Itoa(i))
+			throttling(strconv.Itoa(i))
 			// do your task
 			time.Sleep(2 * time.Second)
 			fmt.Printf("req %v is done \n", i)
