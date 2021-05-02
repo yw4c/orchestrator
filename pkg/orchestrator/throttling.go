@@ -1,57 +1,72 @@
 package orchestrator
 
 import (
-	"fmt"
 	"orchestrator/config"
+	"orchestrator/pkg/pkgerror"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
 )
-
-var sc *sync.Cond
 
 // count of handling request
 var handlingCount int32
 
-// if there are waiting request, keep broadcasting
-var waitingChan chan int
+// pendingRequestMap : [string(request-id)]pendingRequest
+var pendingRequestMap = &sync.Map{}
 
-func init() {
-
-	if !config.GetConfigInstance().Throttling.Enable {
-		return
-	}
-	m := &sync.Mutex{}
-	sc = sync.NewCond(m)
-	atomic.StoreInt32(&handlingCount, 0)
-	waitingChan = make(chan int)
-
-	go func() {
-		for {
-			<-waitingChan
-			sc.Broadcast()
-			fmt.Println("Broadcast")
-			time.Sleep(time.Second)
-		}
-	}()
-	log.Info().Msg("throttling registered!")
+type pendingRequest struct {
+	respChan chan interface{}
 }
 
-func throttling(id string) {
-	if !config.GetConfigInstance().Throttling.Enable {
-		return
+func Throttling(requestID string, timeout time.Duration) (err error) {
+
+	pending := &pendingRequest{
+		respChan: make(chan interface{}),
 	}
-	sc.L.Lock()
-	// 處理中的請求達上限就等
+	pendingRequestMap.Store(requestID, pending)
+
+	// keep waiting
+	log.Debug().Str("request ID", requestID).Msg("Waiting Task ")
+
 	for atomic.LoadInt32(&handlingCount) >= int32(config.GetConfigInstance().Throttling.Concurrency) {
-		fmt.Println(id + "waiting")
-		waitingChan <- 1
-		fmt.Println(id + "waiting2")
-		time.Sleep(time.Second)
-		sc.Wait()
+		select {
+		case <-time.Tick(timeout):
+			err = eris.Wrap(pkgerror.ErrTimeout, "async flow handles it too long, let us cancel it")
+			pendingRequestMap.Delete(requestID)
+			return
+		case data := <-pending.respChan:
+			// finished waiting
+			log.Debug().Str("request ID", requestID).Msg("Finished Task")
+
+			// convert to IAsyncFlowContext
+			if d, ok := data.(IAsyncFlowContext); ok {
+				dto = d
+			} else if e, ok := data.(error); ok { // convert to error
+				err = e
+			} else {
+				err = eris.Wrap(pkgerror.ErrInternalError, "convert to IAsyncFlowContext failed ")
+			}
+			pendingRequestMap.Delete(requestID)
+			return
+		}
 	}
-	atomic.AddInt32(&handlingCount, 1)
-	sc.L.Unlock()
+
+}
+
+func TaskDone(requestID string, resp interface{}) error {
+
+	if pending, ok := pendingRequestMap.Load(requestID); ok {
+		if d, ok := pending.(*pendingRequest); ok {
+			d.respChan <- resp
+		} else {
+			return eris.Wrap(pkgerror.ErrInternalError, "convert failed ")
+		}
+	} else {
+		return eris.Wrap(pkgerror.ErrInternalError, "pending request has not been registered")
+	}
+	return nil
+
 }
