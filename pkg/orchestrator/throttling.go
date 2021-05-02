@@ -22,9 +22,9 @@ type pendingRequest struct {
 type TaskDone func()
 
 func init() {
-	go func(){
-		for atomic.LoadInt32(&handlingCount) >= int32(config.GetConfigInstance().Throttling.Concurrency)
-
+	go func() {
+		for atomic.LoadInt32(&handlingCount) >= int32(config.GetConfigInstance().Throttling.Concurrency) {
+			pendingRequestMap.LoadAndDelete()
 		}
 	}()
 }
@@ -40,7 +40,6 @@ func Throttling(requestID string, timeout time.Duration) (err error, callback Ta
 	log.Debug().Str("request ID", requestID).Msg("Waiting Task ")
 	pendingRequestMap.Store(requestID, pending)
 	<-pending.respChan
-	
 
 	return nil, func() {
 		atomic.AddInt32(&handlingCount, -1)
