@@ -12,19 +12,51 @@ import (
 // count of handling request
 var handlingCount int32
 
-// pendingRequestMap : [string(request-id)]pendingRequest
-var pendingRequestMap = &sync.Map{}
+var pendingRequestChan chan *pendingRequest
+var throttlingMu sync.Mutex
 
 type pendingRequest struct {
-	respChan chan interface{}
+	requestID string
+	respChan  chan interface{}
 }
 
+// callback after task done
 type TaskDone func()
 
 func init() {
+	pendingRequestChan = make(chan *pendingRequest)
+
+	// todo singlton
 	go func() {
-		for atomic.LoadInt32(&handlingCount) >= int32(config.GetConfigInstance().Throttling.Concurrency) {
-			pendingRequestMap.LoadAndDelete()
+		for {
+			select {
+			// hey buddy, get off from queue!
+			case pending := <-pendingRequestChan:
+				log.Debug().Str("request ID", pending.requestID).Msg("Received ")
+
+				// go to wait your self
+				go func(*pendingRequest) {
+
+					for {
+						throttlingMu.Lock()
+						if atomic.LoadInt32(&handlingCount) < int32(config.GetConfigInstance().Throttling.Concurrency) {
+							log.Debug().
+								Str("id", pending.requestID).
+								Int32("handling", atomic.LoadInt32(&handlingCount)).
+								Msg("Check count")
+							atomic.AddInt32(&handlingCount, 1)
+						} else {
+							throttlingMu.Unlock()
+							continue
+						}
+						throttlingMu.Unlock()
+						pending.respChan <- 1
+						return
+					}
+
+				}(pending)
+
+			}
 		}
 	}()
 }
@@ -32,33 +64,18 @@ func init() {
 func Throttling(requestID string, timeout time.Duration) (err error, callback TaskDone) {
 
 	pending := &pendingRequest{
-		respChan: make(chan interface{}),
+		requestID: requestID,
+		respChan:  make(chan interface{}),
 	}
-	atomic.AddInt32(&handlingCount, 1)
 
-	// waiting if present concurrency count is over than passed concurrency count
-	log.Debug().Str("request ID", requestID).Msg("Waiting Task ")
-	pendingRequestMap.Store(requestID, pending)
+	// send msg to queue that i'm waitting !
+	pendingRequestChan <- pending
+
+	// wait
 	<-pending.respChan
 
 	return nil, func() {
 		atomic.AddInt32(&handlingCount, -1)
-
-		log.Debug().Str("request ID", requestID).Msg("Done Task ")
+		log.Debug().Str("request ID", requestID).Int32("handling", atomic.LoadInt32(&handlingCount)).Msg("Done Task ")
 	}
 }
-
-// func TaskDone(requestID string, resp interface{}) error {
-
-// 	if pending, ok := pendingRequestMap.Load(requestID); ok {
-// 		if d, ok := pending.(*pendingRequest); ok {
-// 			d.respChan <- resp
-// 		} else {
-// 			return eris.Wrap(pkgerror.ErrInternalError, "convert failed ")
-// 		}
-// 	} else {
-// 		return eris.Wrap(pkgerror.ErrInternalError, "pending request has not been registered")
-// 	}
-// 	return nil
-
-// }
