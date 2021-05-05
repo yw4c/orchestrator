@@ -5,7 +5,7 @@ is_debug: true
 # app 對外服務
 server:
   grpc:
-    port: 10050
+    port: 10000
 
 # 抽換服務
 engine:
@@ -29,12 +29,14 @@ message_queue:
 
 # app 連線對象
 client:
-  rabbit_mq:
-    host: rabbitmq
-    port: 5672
-    username: guest
-    password: guest
   nats:
-    cluster_id: "stan-dev-cluster"
+    cluster_id: "test-cluster"
     client_id: orchestrator
-    nats_url: "nats://nats-dev-cluster.nats-cluster.svc:4222"
+    nats_url: "nats://nats-streaming:4222"
+  burnner-grpc:
+    host: burnner
+    port: 10000
+
+throttling:
+  concurrency: 200 # 併發數
+  enable: true

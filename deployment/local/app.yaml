@@ -29,11 +29,6 @@ message_queue:
 
 # app 連線對象
 client:
-  rabbit_mq:
-    host: rabbitmq
-    port: 5672
-    username: guest
-    password: guest
   nats:
     cluster_id: "test-cluster"
     client_id: orchestrator

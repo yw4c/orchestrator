@@ -11,3 +11,45 @@ spec:
       targetPort: 10000
   selector:
     app: orchestrator
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: burnner
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: 10000
+      protocol: TCP
+      targetPort: 10000
+  selector:
+    app: burnner
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+  selector:
+    app: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-streaming
+spec:
+  type: ClusterIP
+  ports:
+    - name: tcp
+      port: 4222
+      protocol: TCP
+      targetPort: 4222
+  selector:
+    app: nats-streaming

@@ -2,31 +2,37 @@ package orchestrator
 
 import (
 	"orchestrator/config"
+	"orchestrator/pkg/pkgerror"
 	"sync"
 	"sync/atomic"
-	"time"
 
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
 )
 
 // count of handling request
 var handlingCount int32
 
+// queue of pending requests
 var pendingRequestChan chan *pendingRequest
 var throttlingMu sync.Mutex
 
 type pendingRequest struct {
 	requestID string
-	respChan  chan interface{}
+	passChan  chan interface{}
 }
 
 // callback after task done
 type TaskDone func()
 
 func init() {
+
+	if !config.GetConfigInstance().Throttling.Enable {
+		return
+	}
+
 	pendingRequestChan = make(chan *pendingRequest)
 
-	// todo singlton
 	go func() {
 		for {
 			select {
@@ -39,6 +45,7 @@ func init() {
 
 					for {
 						throttlingMu.Lock()
+						// if handling request is fewer than max concurrency of config
 						if atomic.LoadInt32(&handlingCount) < int32(config.GetConfigInstance().Throttling.Concurrency) {
 							log.Debug().
 								Str("id", pending.requestID).
@@ -50,29 +57,30 @@ func init() {
 							continue
 						}
 						throttlingMu.Unlock()
-						pending.respChan <- 1
+						pending.passChan <- 1
 						return
 					}
-
 				}(pending)
-
 			}
 		}
 	}()
 }
 
-func Throttling(requestID string, timeout time.Duration) (err error, callback TaskDone) {
+func Throttling(requestID string) (err error, callback TaskDone) {
+	if !config.GetConfigInstance().Throttling.Enable {
+		return eris.Wrap(pkgerror.ErrInternalError, "throttling mode is disable"), nil
+	}
 
 	pending := &pendingRequest{
 		requestID: requestID,
-		respChan:  make(chan interface{}),
+		passChan:  make(chan interface{}),
 	}
 
 	// send msg to queue that i'm waitting !
 	pendingRequestChan <- pending
 
 	// wait
-	<-pending.respChan
+	<-pending.passChan
 
 	return nil, func() {
 		atomic.AddInt32(&handlingCount, -1)
