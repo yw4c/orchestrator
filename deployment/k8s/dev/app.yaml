@@ -38,5 +38,5 @@ client:
     port: 10000
 
 throttling:
-  concurrency: 200 # 併發數
+  concurrency: 50 # 併發數
   enable: true

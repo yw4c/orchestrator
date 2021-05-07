@@ -15,18 +15,3 @@ update_image:
 deploy-dev:
 	kustomize build ./deployment/k8s/dev | kubectl apply -f - -n orchestrator
 
-k8s-nats:
-	#helm install rabbitmq --set auth.username=guest,auth.password=guest bitnami/rabbitmq -n orchestrator
-	# helm install nats bitnami/nats -n orchestrator
- 	# https://nats-io.github.io/k8s/
-	# kubectl create ns nats
-	helm repo add nats https://nats-io.github.io/k8s/helm/charts/
-	helm repo update
-	helm install my-nats nats/nats -n nats 
-	helm install my-stan nats/stan --set stan.nats.url=nats://my-nats:4222 -n nats 
-k8s-redis:
-	helm install redis bitnami/redis -n orchestrator
-
-rm-k8s-nats:
-	helm uninstall my-nats nats/nats -n nats
-	helm uninstall my-stan nats/stan -n nats
