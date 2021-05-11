@@ -1,7 +1,6 @@
 package orchestrator
 
 import (
-	"orchestrator/config"
 	"orchestrator/pkg/ctx"
 	"orchestrator/pkg/pkgerror"
 
@@ -46,14 +45,6 @@ func (s *SyncFlow) Run(requestID string, requestParam interface{}, reqKey FlowCo
 
 	if s.rollbackTopic == "" {
 		return nil, eris.Wrap(pkgerror.ErrInternalError, "rollback topic is not set")
-	}
-
-	if config.GetConfigInstance().Throttling.Enable {
-		err, taskDone := Throttling(requestID)
-		if err != nil {
-			return nil, err
-		}
-		defer taskDone()
 	}
 
 	context := &ctx.Context{}

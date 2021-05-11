@@ -37,6 +37,3 @@ client:
     host: burnner
     port: 10000
 
-throttling:
-  concurrency: 50 # 併發數
-  enable: true

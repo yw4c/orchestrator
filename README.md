@@ -27,7 +27,8 @@
 
     # 本地啟動相關服務
     cd deployment/local
-    docker-compose up --build
+    docker-compose up -d
+    cd ../..
     go run main.go
 
     # Hit it up
