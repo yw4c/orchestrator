@@ -12,19 +12,19 @@ import (
 	"time"
 )
 
-const(
+const (
 	durable = true
 	// 首次声明它的连接（Connection）可见
 	rabbitmqExclusive = false
 )
 
 // NewRabbitMQ 建立 pod 與 RabbitMQ 連線
-func NewRabbitMQ()*RabbitMQ {
+func NewRabbitMQ() *RabbitMQ {
 
 	mqConfig := config.GetConfigInstance().Client.RabbitMQ
 	mq := &RabbitMQ{}
 
-	connQuery:= fmt.Sprintf("amqp://%s:%s@%s/", mqConfig.Username, mqConfig.Password, mqConfig.Host+":"+mqConfig.Port)
+	connQuery := fmt.Sprintf("amqp://%s:%s@%s/", mqConfig.Username, mqConfig.Password, mqConfig.Host+":"+mqConfig.Port)
 	log.Info().Msg("Dialing to RabbitMQ" + connQuery)
 
 	var err error
@@ -45,17 +45,16 @@ func NewRabbitMQ()*RabbitMQ {
 			break
 		}
 		time.Sleep(time.Second)
-		log.Warn().Msg("rabbit mq dial retrying" )
+		log.Warn().Msg("rabbit mq dial retrying")
 	}
 
 	return mq
 }
+
 type RabbitMQ struct {
-	conn *amqp.Connection
+	conn         *amqp.Connection
 	chanProducer *amqp.Channel
 }
-
-
 
 func (r *RabbitMQ) Produce(topicID Topic, message []byte) (err error) {
 
@@ -65,10 +64,10 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) (err error) {
 	log.Info().Str("topic", string(topic)).Msg("Producing Msg")
 
 	err = ch.Publish(
-		string(topic+"_exchange"),     // exchange
-		string(topic), // routing key
-		false,  // mandatory
-		false,  // immediate
+		string(topic+"_exchange"), // exchange
+		string(topic),             // routing key
+		false,                     // mandatory
+		false,                     // immediate
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        message,
@@ -78,7 +77,6 @@ func (r *RabbitMQ) Produce(topicID Topic, message []byte) (err error) {
 	}
 	return
 }
-
 
 // Exchange -> Binding -> Queues -> Consumer
 func (r *RabbitMQ) ListenAndConsume(topicID Topic, node AsyncNode) {
@@ -91,41 +89,37 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, node AsyncNode) {
 		panic(err.Error())
 	}
 
-
-
 	// 使用 direct 一對一接收
 	err = channel.ExchangeDeclare(
-		string(topic+"_exchange"),   // name
-		"direct", // type
-		false,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		string(topic+"_exchange"), // name
+		"direct",                  // type
+		false,                     // durable
+		false,                     // auto-deleted
+		false,                     // internal
+		false,                     // no-wait
+		nil,                       // arguments
 	)
 	if err != nil {
 		panic(err.Error())
 	}
-
 
 	// Queue
 	q, err := channel.QueueDeclare(
-		string(topic+"_queue"),    // name
-		durable, // durable
-		false, // delete when unused
-		rabbitmqExclusive,  // exclusive
-		false, // no-wait
-		nil,   // arguments
+		string(topic+"_queue"), // name
+		durable,                // durable
+		false,                  // delete when unused
+		rabbitmqExclusive,      // exclusive
+		false,                  // no-wait
+		nil,                    // arguments
 	)
 	if err != nil {
 		panic(err.Error())
 	}
 
-
 	// Bindings
 	err = channel.QueueBind(
-		q.Name, // queue name, 这里指的是 test_logs
-		string(topic),     // routing key
+		q.Name,                    // queue name, 这里指的是 test_logs
+		string(topic),             // routing key
 		string(topic+"_exchange"), // exchange
 		false,
 		nil)
@@ -133,19 +127,19 @@ func (r *RabbitMQ) ListenAndConsume(topicID Topic, node AsyncNode) {
 		panic(err.Error())
 	}
 
-	for i:=1; i <= topicID.GetConcurrency();i ++ {
-		consumerName := topic+"_consumer_"+strconv.Itoa(i)
+	for i := 1; i <= topicID.GetConcurrency(); i++ {
+		consumerName := topic + "_consumer_" + strconv.Itoa(i)
 		log.Info().Str("consumer_name", consumerName).Msg("registering")
 
 		// register consumer
 		msgs, err := channel.Consume(
-			q.Name,                    // queue
-			consumerName, // consumer
-			false,                     // auto-ack
-			rabbitmqExclusive,                     // exclusive
-			false,                     // no-local
-			false,                     // no-wait
-			nil,                       // args
+			q.Name,            // queue
+			consumerName,      // consumer
+			false,             // auto-ack
+			rabbitmqExclusive, // exclusive
+			false,             // no-local
+			false,             // no-wait
+			nil,               // args
 		)
 		if err != nil {
 			panic(err.Error())
@@ -191,41 +185,37 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, node RollbackNode) {
 		panic(err.Error())
 	}
 
-
-
 	// 使用 direct 一對一接收
 	err = channel.ExchangeDeclare(
-		string(topic+"_exchange"),   // name
-		"direct", // type
-		false,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		string(topic+"_exchange"), // name
+		"direct",                  // type
+		false,                     // durable
+		false,                     // auto-deleted
+		false,                     // internal
+		false,                     // no-wait
+		nil,                       // arguments
 	)
 	if err != nil {
 		panic(err.Error())
 	}
-
 
 	// Queue
 	q, err := channel.QueueDeclare(
-		string(topic+"_queue"),    // name
-		true, // durable
-		false, // delete when unused
-		rabbitmqExclusive,  // exclusive
-		false, // no-wait
-		nil,   // arguments
+		string(topic+"_queue"), // name
+		true,                   // durable
+		false,                  // delete when unused
+		rabbitmqExclusive,      // exclusive
+		false,                  // no-wait
+		nil,                    // arguments
 	)
 	if err != nil {
 		panic(err.Error())
 	}
 
-
 	// Bindings
 	err = channel.QueueBind(
-		q.Name, // queue name, 这里指的是 test_logs
-		string(topic),     // routing key
+		q.Name,                    // queue name, 这里指的是 test_logs
+		string(topic),             // routing key
 		string(topic+"_exchange"), // exchange
 		false,
 		nil)
@@ -233,19 +223,19 @@ func (r *RabbitMQ) ConsumeRollback(topicID Topic, node RollbackNode) {
 		panic(err.Error())
 	}
 
-	for i:=1; i <= topicID.GetConcurrency();i ++ {
+	for i := 1; i <= topicID.GetConcurrency(); i++ {
 		consumerName := topic + "_consumer_" + strconv.Itoa(i)
 		log.Info().Str("consumer_name", consumerName).Msg("registering")
 
 		// register consumer
 		msgs, err := channel.Consume(
-			q.Name,                    // queue
-			consumerName, // consumer
-			false,                     // auto-ack
-			rabbitmqExclusive,                     // exclusive
-			false,                     // no-local
-			false,                     // no-wait
-			nil,                       // args
+			q.Name,            // queue
+			consumerName,      // consumer
+			false,             // auto-ack
+			rabbitmqExclusive, // exclusive
+			false,             // no-local
+			false,             // no-wait
+			nil,               // args
 		)
 		if err != nil {
 			panic(err.Error())

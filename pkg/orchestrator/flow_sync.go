@@ -1,59 +1,58 @@
 package orchestrator
 
 import (
-	"orchestrator/pkg/ctx"
 	"orchestrator/pkg/pkgerror"
 
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
 )
 
-// 同步的事務流程
-type ISyncFlow interface {
-	// 將䩞點依序加入
-	Use(syncNode SyncNode) ISyncFlow
-	// 執行事務流程
-	Run(requestID string, requestParam interface{}, reqKey FlowContextKeyReq, respKey FlowContextKeyResp) (response interface{}, err error)
-	IFlow
+// ISyncFacade
+type ISyncFacade interface {
+	// Register Nodes in serialize
+	Use(syncNode SyncNode) ISyncFacade
+	// Execute facade in request
+	Run(requestID string, requestParam interface{}) (response interface{}, err error)
+	IFacade
 }
 
-// 同步的事務節點
-type SyncNode func(requestID string, ctx *ctx.Context) error
+// SyncNode
+type SyncNode func(requestID string, ctx *Context) error
 
-// 從 Context 取得 Request Value 的 Key
-type FlowContextKeyReq string
+// FacadeReqContextKey: Request is stored in context, give it a key to get request payload
+type FacadeReqContextKey string
 
-// 從 Context 取得 Response Value 的 Key
-type FlowContextKeyResp string
+// FacadeRespContextKey: Response is stored in context, give it a key to get response data
+type FacadeRespContextKey string
 
-type SyncFlow struct {
+type SyncFacade struct {
 	nodes         []SyncNode
 	rollbackTopic Topic
 }
 
-func (s *SyncFlow) ConsumeRollback(rollback *TopicRollbackNodePair) {
+func (s *SyncFacade) ConsumeRollback(rollback *TopicRollbackNodePair) {
 	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Node)
 	s.rollbackTopic = rollback.Topic
 }
 
-func (s *SyncFlow) Use(syncNode SyncNode) ISyncFlow {
+func (s *SyncFacade) Use(syncNode SyncNode) ISyncFacade {
 	s.nodes = append(s.nodes, syncNode)
 	return s
 }
 
-func (s *SyncFlow) Run(requestID string, requestParam interface{}, reqKey FlowContextKeyReq, respKey FlowContextKeyResp) (response interface{}, err error) {
+func (s *SyncFacade) Run(requestID string, requestParam interface{}) (response interface{}, err error) {
 
 	if s.rollbackTopic == "" {
 		return nil, eris.Wrap(pkgerror.ErrInternalError, "rollback topic is not set")
 	}
 
-	context := &ctx.Context{}
-	context.Set(string(reqKey), requestParam)
+	context := &Context{}
+	context.setPbReq(requestParam)
 
 	for _, v := range s.nodes {
 		if err := v(requestID, context); err != nil {
 
-			// 發生錯誤，發送 Rollback Topic 給 MQ
+			// if error occur，send Rollback Topic to MQ
 			log.Error().
 				Str("Rollback Topic", string(s.rollbackTopic)).
 				Str("Request", requestID).
@@ -65,15 +64,13 @@ func (s *SyncFlow) Run(requestID string, requestParam interface{}, reqKey FlowCo
 	}
 
 	// Flow finished successfully
-	resp, exist := context.Get(string(respKey))
-	if !exist {
-		return nil, eris.Wrap(pkgerror.ErrInternalError, "Can not get DTO from Context")
-	}
+	resp, _ := context.Get(pbRespCtxKey)
+
 	return resp, nil
 }
 
-func NewSyncFlow() ISyncFlow {
-	return &SyncFlow{
+func NewSyncFacade() ISyncFacade {
+	return &SyncFacade{
 		nodes: nil,
 	}
 }

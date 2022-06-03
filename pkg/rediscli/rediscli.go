@@ -16,12 +16,12 @@ func GetRedisCliInstance() *redis.Client {
 	once.Do(func() {
 		rCfg := config.GetConfigInstance().Client.Redis
 
-		c:= redis.NewClient(&redis.Options{
-			Addr: rCfg.Host+":"+ rCfg.Port,
-			DB:   rCfg.DB,
-			PoolSize: rCfg.PoolSize,
+		c := redis.NewClient(&redis.Options{
+			Addr:         rCfg.Host + ":" + rCfg.Port,
+			DB:           rCfg.DB,
+			PoolSize:     rCfg.PoolSize,
 			MinIdleConns: rCfg.MinIdleConn,
-			IdleTimeout: time.Duration(rCfg.IdleTimeout)*time.Second,
+			IdleTimeout:  time.Duration(rCfg.IdleTimeout) * time.Second,
 		})
 		if _, err := c.Ping(context.Background()).Result(); err != nil {
 			panic("redis connection refused ")

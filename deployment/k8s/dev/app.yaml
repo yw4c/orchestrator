@@ -1,24 +1,22 @@
-# 產品環境 <dev,sit,prod>
+# env <dev,sit,prod>
 env: dev
 is_debug: true
 
-# app 對外服務
 server:
   grpc:
     port: 10000
 
-# 抽換服務
 engine:
-  # message queue 選用 <rabbit_mq, nats>
+  # message queue <rabbit_mq, nats>
   message_queue: nats
 
 # Message Queue
 message_queue:
   topic_prefix: topic_booking_dev
   # Topics
-  # - id : short name 對應 ./topic/topic.go
-  # - is_throttling: true: pub/sub 將會同路進出，並通知事務完成, default : false
-  # - concurrency : 接收的併發數, default 1
+  # - id : short name mapping ./topic/topic.go
+  # - is_throttling: true: pub/sub will through same pod, default : false
+  # - concurrency : count of consumers, default 1
   topics:
     - id: create_order_throttling
       is_throttling: true
@@ -27,7 +25,6 @@ message_queue:
       is_throttling: true
       concurrency: 100
 
-# app 連線對象
 client:
   nats:
     cluster_id: "test-cluster"

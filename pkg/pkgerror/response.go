@@ -9,10 +9,9 @@ import (
 
 var Format = eris.NewDefaultStringFormat(eris.FormatOptions{
 	InvertOutput: true, // flag that inverts the error output (wrap errors shown first)
-	WithTrace: true,    // flag that enables stack trace output
-	InvertTrace: true,  // flag that inverts the stack trace output (top of call stack shown first)
+	WithTrace:    true, // flag that enables stack trace output
+	InvertTrace:  true, // flag that inverts the stack trace output (top of call stack shown first)
 })
-
 
 func SetGRPCErrorResp(requestID string, err error) error {
 
@@ -24,7 +23,6 @@ func SetGRPCErrorResp(requestID string, err error) error {
 		Str("x-request-id", requestID).
 		Str("error", err.Error()).
 		Msg("gRPC Error Response")
-
 
 	causeErr := eris.Cause(err)
 	_err, ok := causeErr.(*_error)

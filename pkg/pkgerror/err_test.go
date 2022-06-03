@@ -1,3 +1,4 @@
+//go:build framework
 // +build framework
 
 package pkgerror
@@ -8,7 +9,6 @@ import (
 	"testing"
 )
 
-
 func TestErr(t *testing.T) {
 
 	// you can wrap multiple err before response.
@@ -18,8 +18,8 @@ func TestErr(t *testing.T) {
 
 	format := eris.NewDefaultStringFormat(eris.FormatOptions{
 		InvertOutput: true, // flag that inverts the error output (wrap errors shown first)
-		WithTrace: true,    // flag that enables stack trace output
-		InvertTrace: true,  // flag that inverts the stack trace output (top of call stack shown first)
+		WithTrace:    true, // flag that enables stack trace output
+		InvertTrace:  true, // flag that inverts the stack trace output (top of call stack shown first)
 	})
 
 	formattedStr := eris.ToCustomString(err3, format)
@@ -32,5 +32,3 @@ func TestConvertProtoErr(t *testing.T) {
 	err = convertProtoErr(err)
 	log.Println(err)
 }
-
-

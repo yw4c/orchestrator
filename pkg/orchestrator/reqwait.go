@@ -17,7 +17,7 @@ func Wait(requestID string, timeout time.Duration) (dto IAsyncFlowContext, err e
 
 	for {
 		// if waited requestID got into the map
-		if data, ok := FinishedRequests.Load(requestID) ; ok {
+		if data, ok := FinishedRequests.Load(requestID); ok {
 
 			// convert to IAsyncFlowContext
 			if d, ok := data.(IAsyncFlowContext); ok {
@@ -42,7 +42,7 @@ func Wait(requestID string, timeout time.Duration) (dto IAsyncFlowContext, err e
 			return
 		}
 
-		time.Sleep(100*time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 }

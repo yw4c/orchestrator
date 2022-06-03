@@ -40,15 +40,14 @@ var (
 	ErrIPNotAllowed                                = &_error{Code: "403012", Message: "IP is invalid", Status: http.StatusForbidden, GRPCCode: codes.PermissionDenied}
 
 	// ErrNotFound         =  &_error{Code: "404000", Message: http.StatusText(http.StatusNotFound), Status: http.StatusNotFound}
-	ErrResourceNotFound = &_error{Code: "404001", Message: "The specified resource does not exist.", Status: http.StatusNotFound, GRPCCode: codes.NotFound}
-	ErrAccountNotFound  = &_error{Code: "404002", Message: "cant find any account.", Status: http.StatusNotFound, GRPCCode: codes.NotFound}
-	ErrPageNotFound     = &_error{Code: "404003", Message: "Page Not Fount.", Status: http.StatusNotFound, GRPCCode: codes.NotFound}
-	ErrTimeout            = &_error{Code: "408000", Message: "Request timeout", Status: http.StatusRequestTimeout, GRPCCode: codes.Canceled}
+	ErrResourceNotFound      = &_error{Code: "404001", Message: "The specified resource does not exist.", Status: http.StatusNotFound, GRPCCode: codes.NotFound}
+	ErrAccountNotFound       = &_error{Code: "404002", Message: "cant find any account.", Status: http.StatusNotFound, GRPCCode: codes.NotFound}
+	ErrPageNotFound          = &_error{Code: "404003", Message: "Page Not Fount.", Status: http.StatusNotFound, GRPCCode: codes.NotFound}
+	ErrTimeout               = &_error{Code: "408000", Message: "Request timeout", Status: http.StatusRequestTimeout, GRPCCode: codes.Canceled}
 	ErrConflict              = &_error{Code: "409000", Message: http.StatusText(http.StatusConflict), Status: http.StatusConflict, GRPCCode: codes.AlreadyExists}
 	ErrAccountAlreadyExists  = &_error{Code: "409001", Message: "The specified account already exists.", Status: http.StatusConflict, GRPCCode: codes.AlreadyExists}
 	ErrAccountBeingCreated   = &_error{Code: "409002", Message: "The specified account is in the process of being created.", Status: http.StatusConflict, GRPCCode: codes.AlreadyExists}
 	ErrResourceAlreadyExists = &_error{Code: "409004", Message: "The specified resource already exists.", Status: http.StatusConflict, GRPCCode: codes.AlreadyExists}
-
 
 	ErrInternalServerError = &_error{Code: "500000", Message: http.StatusText(http.StatusInternalServerError), Status: http.StatusInternalServerError, GRPCCode: codes.Internal}
 	ErrInternalError       = &_error{Code: "500001", Message: "The server encountered an internal error. Please retry the request.", Status: http.StatusInternalServerError, GRPCCode: codes.Internal}

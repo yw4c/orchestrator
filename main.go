@@ -22,9 +22,9 @@ func main() {
 	fmt.Println("container initializing ... ")
 
 	// 註冊事務流程
-	facade.RegisterAsyncBookingFlows()
-	facade.RegisterSyncBookingFlow()
-	facade.RegisterThrottlingBookingFlow()
+	facade.RegisterAsyncBookingFacade()
+	facade.RegisterSyncBookingFacade()
+	//facade.RegisterThrottlingBookingFlow()
 
 	// gRPC Connection
 	lis, err := net.Listen("tcp", ":"+config.GetConfigInstance().Server.Grpc.Port)

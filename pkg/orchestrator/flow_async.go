@@ -9,23 +9,26 @@ import (
 )
 
 // 異步的事務流程
-type IAsyncFlow interface {
+type IAsyncFacade interface {
 	// 註冊 Topic 與對應的 事務節點(AsyncNode)，有順序性
-	Use(TopicNodePair TopicNodePair) IAsyncFlow
+	Use(TopicNodePair TopicNodePair) IAsyncFacade
 	// 開始準備接收 MQ 訊息
 	Consume()
 	// 執行事務流程
 	Run(requestID string, requestParam IAsyncFlowContext) (err error)
 
-	IFlow
+	IFacade
 }
 
 // 異步的事務節點
 type AsyncNode func(topic Topic, data []byte, next Next, rollback Rollback)
+
 // 進行下一個事務節點
 type Next func(context IAsyncFlowContext)
+
 // 執行 Rollback：記錄錯誤日誌、推送 Rollback Topic
 type Rollback func(err error, context IAsyncFlowContext)
+
 // Rollback的事務節點
 type RollbackNode func(topic Topic, data []byte)
 
@@ -39,25 +42,24 @@ type TopicRollbackNodePair struct {
 	Node  RollbackNode
 }
 
-
-// 推送 rollback Topic 給 mq
+// Push rollback topic
 func rollback(topic Topic, requestID string) {
 	msg, _ := json.Marshal(&RollbackMsg{RequestID: requestID})
 	GetMQInstance().Produce(topic, msg)
 }
 
-type AsyncFlow struct {
+type AsyncFacade struct {
 	// 一個 Topic 對應一個事務
 	pairs         []TopicNodePair
 	rollbackTopic Topic
 }
 
-func (s *AsyncFlow) ConsumeRollback(rollback *TopicRollbackNodePair) {
+func (s *AsyncFacade) ConsumeRollback(rollback *TopicRollbackNodePair) {
 	GetMQInstance().ConsumeRollback(rollback.Topic, rollback.Node)
 	s.rollbackTopic = rollback.Topic
 }
 
-func (s *AsyncFlow) Consume() {
+func (s *AsyncFacade) Consume() {
 	if len(s.pairs) == 0 {
 		return
 	}
@@ -67,12 +69,12 @@ func (s *AsyncFlow) Consume() {
 	}
 }
 
-func (s *AsyncFlow) Use(TopicNodePair TopicNodePair) IAsyncFlow {
+func (s *AsyncFacade) Use(TopicNodePair TopicNodePair) IAsyncFacade {
 	s.pairs = append(s.pairs, TopicNodePair)
 	return s
 }
 
-func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowContext) (err error){
+func (s *AsyncFacade) Run(requestID string, requestParam IAsyncFlowContext) (err error) {
 	if len(s.pairs) == 0 {
 		return
 	}
@@ -89,26 +91,24 @@ func (s *AsyncFlow) Run(requestID string, requestParam IAsyncFlowContext) (err e
 	requestParam.SetTopics(topics)
 	requestParam.SetRollbackTopic(s.rollbackTopic)
 
-
 	data, err := json.Marshal(requestParam)
 	if err != nil {
-		return  eris.Wrap(pkgerror.ErrInternalError, "Json Marshal Fail")
+		return eris.Wrap(pkgerror.ErrInternalError, "Json Marshal Fail")
 	}
 
 	// 開始推播給第一個事務
 	GetMQInstance().Produce(s.pairs[0].Topic, data)
-	return    nil
+	return nil
 }
 
-func NewAsyncFlow(rollbackTopic Topic) *AsyncFlow {
-	return &AsyncFlow{
+func NewAsyncFacade(rollbackTopic Topic) *AsyncFacade {
+	return &AsyncFacade{
 		pairs:         nil,
 		rollbackTopic: rollbackTopic,
 	}
 }
 
-
-func getNextFunc() Next{
+func getNextFunc() Next {
 	return func(d IAsyncFlowContext) {
 
 		var nextTopic Topic
@@ -117,7 +117,7 @@ func getNextFunc() Next{
 		if len(d.GetTopics())-1 > d.GetCurrentIndex() {
 
 			nextTopic = d.GetTopics()[d.GetCurrentIndex()+1]
-			d.SetCurrentIndex(d.GetCurrentIndex()+1)
+			d.SetCurrentIndex(d.GetCurrentIndex() + 1)
 			nextData, err := json.Marshal(d)
 			if err != nil {
 				log.Error().Str("track", string(debug.Stack())).

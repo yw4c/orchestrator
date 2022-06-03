@@ -8,7 +8,7 @@ import (
 func TestGetConfigInstance(t *testing.T) {
 
 	GetConfigInstance()
-	c:= GetConfigInstance()
+	c := GetConfigInstance()
 	assert.NotEqual(t, c.Env, "")
 
 }

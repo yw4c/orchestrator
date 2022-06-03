@@ -3,37 +3,34 @@ package handler
 import (
 	"context"
 	"github.com/rotisserie/eris"
+	"orchestrator/dto"
 	"orchestrator/facade"
-	"orchestrator/node"
 	"orchestrator/pb"
 	"orchestrator/pkg/helper"
 	"orchestrator/pkg/orchestrator"
 	"orchestrator/pkg/pkgerror"
 )
 
-// 協調者對外的 gRPC 服務
-// BookingService implement gRPC Server of Protobuf
-type BookingService struct {
+// BookingService implement gRPC Server
+type BookingService struct{}
 
-}
+func (b BookingService) HandleSyncBooking(ctx context.Context, req *pb.BookingRequest) (resp *pb.BookingSyncResponse, err error) {
 
-func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingRequest) (resp *pb.BookingSyncResponse, err error) {
-
-	// 從 metadata 取得 request-id
+	// get request ID from meta-data
 	requestID, err := helper.GetRequestID(ctx)
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
 
-	// 從 facade 取得註冊的事務流程
-	flow := orchestrator.GetInstance().GetSyncFlow(facade.SyncBooking)
-	if flow == nil {
+	// get facade
+	facade := orchestrator.GetInstance().GetSyncFacade(facade.SyncBooking)
+	if facade == nil {
 		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
 
-	// 執行事務流程
-	response, err := flow.Run(requestID, req, node.BookingSyncPbReq, node.BookingSyncPbResp)
+	// execute facade
+	response, err := facade.Run(requestID, req)
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
@@ -48,84 +45,34 @@ func (b BookingService) HandleSyncBooking(ctx context.Context,req *pb.BookingReq
 
 }
 
-func (b BookingService) HandleAsyncBooking(ctx context.Context,req *pb.BookingRequest) (*pb.BookingASyncResponse, error) {
-	// 從 metadata 取得 request-id
+func (b BookingService) HandleAsyncBooking(ctx context.Context, req *pb.BookingRequest) (*pb.BookingASyncResponse, error) {
+	// get request ID from meta-data
 	requestID, err := helper.GetRequestID(ctx)
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
 
-	// 從 facade 取得註冊的事務流程
-	flow := orchestrator.GetInstance().GetAsyncFlow(facade.AsyncBooking)
+	// get facade
+	flow := orchestrator.GetInstance().GetAsyncFacade(facade.AsyncBooking)
 	if flow == nil {
 		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
 
-	// 加入請求
-	reqMsg := node.BookingMsgDTO{
-		FaultInject:      req.FaultInject,
-		ProductID:        req.ProductID,
-		AsyncFlowContext: &orchestrator.AsyncFlowContext{},
+	// init dto
+	reqMsg := dto.BookingMsgDTO{
+		FaultInject:        req.FaultInject,
+		ProductID:          req.ProductID,
+		AsyncFacadeContext: &orchestrator.AsyncFacadeContext{},
 	}
 
-
-	// 執行事務流程
+	// execute facade in async
 	err = flow.Run(requestID, reqMsg)
 	if err != nil {
 		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
 	}
+	// response immediately
 	return &pb.BookingASyncResponse{
-		RequestID:            requestID,
-		FaultInject:          false,
+		RequestID: requestID,
 	}, err
-}
-
-func (b BookingService) HandleThrottlingBooking(ctx context.Context, req *pb.BookingRequest) (resp *pb.BookingSyncResponse, err error) {
-	resp = &pb.BookingSyncResponse{}
-
-	// 從 metadata 取得 request-id
-	requestID, err := helper.GetRequestID(ctx)
-	if err != nil {
-		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-	}
-
-	// 從 facade 取得註冊的事務流程
-	flow := orchestrator.GetInstance().GetThrottlingFlows(facade.ThrottlingBooking)
-	if flow == nil {
-		err := eris.Wrap(pkgerror.ErrInternalServerError, "Flow not found")
-		return nil, pkgerror.SetGRPCErrorResp(requestID, err)
-	}
-
-	// Convert gRPC request into MQ message with Context
-	reqMsg := node.BookingMsgDTO{
-		FaultInject:      req.FaultInject,
-		ProductID:        req.ProductID,
-		AsyncFlowContext: &orchestrator.AsyncFlowContext{},
-	}
-
-	// 執行事務流程
-	iResp, err := flow.Run(requestID, reqMsg)
-
-	if err != nil {
-		err = pkgerror.SetGRPCErrorResp(requestID, err)
-		return
-	}
-
-	// Convert msg into gRPC response
-	if dto, ok := iResp.(*node.BookingMsgDTO); ok {
-		resp = &pb.BookingSyncResponse{
-			RequestID:            dto.RequestID,
-			OrderID:              dto.OrderID,
-			PaymentID:            dto.PaymentID,
-			FaultInject:          dto.FaultInject,
-		}
-	} else {
-		err = eris.Wrap(pkgerror.ErrInternalError, "convert to msg dto failed")
-		err = pkgerror.SetGRPCErrorResp(requestID, err)
-		return
-	}
-
-	return
-
 }

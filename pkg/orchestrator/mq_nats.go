@@ -16,7 +16,7 @@ var (
 	NatsLostConn stan.Option
 )
 
-func NewNats() *Nats  {
+func NewNats() *Nats {
 	// 和 server 斷線的話
 	NatsLostConn = stan.SetConnectionLostHandler(func(c stan.Conn, err error) {
 		log.Error().Err(err).Msg("server dead")
@@ -51,13 +51,11 @@ func (n *Nats) Produce(topicID Topic, message []byte) (err error) {
 func (n *Nats) ListenAndConsume(topicID Topic, node AsyncNode) {
 	topic := topicID.GetTopicName()
 
-
-	for i:=1; i <= topicID.GetConcurrency();i ++ {
-		consumerName := topic+"_consumer_"+strconv.Itoa(i)
+	for i := 1; i <= topicID.GetConcurrency(); i++ {
+		consumerName := topic + "_consumer_" + strconv.Itoa(i)
 		log.Info().Str("consumer_name", consumerName).Msg("registering")
 
-
-		go func(node AsyncNode,consumerName string) {
+		go func(node AsyncNode, consumerName string) {
 
 			defer func() {
 				if p := recover(); p != nil {
@@ -86,19 +84,17 @@ func (n *Nats) ListenAndConsume(topicID Topic, node AsyncNode) {
 			}
 		}(node, consumerName)
 
-
 	}
 }
 
 func (n *Nats) ConsumeRollback(topicID Topic, node RollbackNode) {
 	topic := topicID.GetTopicName()
 
-
-	for i:=1; i <= topicID.GetConcurrency();i ++ {
-		consumerName := topic+"_consumer_"+strconv.Itoa(i)
+	for i := 1; i <= topicID.GetConcurrency(); i++ {
+		consumerName := topic + "_consumer_" + strconv.Itoa(i)
 		log.Info().Str("consumer_name", consumerName).Msg("registering")
 
-		go func(node RollbackNode,consumerName string) {
+		go func(node RollbackNode, consumerName string) {
 
 			defer func() {
 				if p := recover(); p != nil {
@@ -127,16 +123,15 @@ func (n *Nats) ConsumeRollback(topicID Topic, node RollbackNode) {
 			}
 		}(node, consumerName)
 
-
 	}
 }
 
-func connectNats(opt ...stan.Option) (conn stan.Conn){
+func connectNats(opt ...stan.Option) (conn stan.Conn) {
 
 	natsCnf := config.GetConfigInstance().Client.Nats
 	natsUrl := natsCnf.NatsUrl
 	clusterID := natsCnf.ClusterId
-	clientID := natsCnf.ClientId+"_"+os.Getenv("POD_ID")
+	clientID := natsCnf.ClientId + "_" + os.Getenv("POD_ID")
 
 	opt = append(opt, stan.NatsURL(natsUrl))
 	var err error

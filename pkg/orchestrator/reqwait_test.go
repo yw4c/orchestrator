@@ -10,7 +10,7 @@ import (
 )
 
 type mockAsyncDTO struct {
-	*AsyncFlowContext
+	*AsyncFacadeContext
 	foo string
 }
 
@@ -18,13 +18,13 @@ func TestReqWait_Wait(t *testing.T) {
 
 	var wg sync.WaitGroup
 	var concurrency = 10
-	var timeout = 1*time.Second
+	var timeout = 1 * time.Second
 	wg.Add(concurrency)
 
-	for i:= 1;i<=concurrency ;i++ {
+	for i := 1; i <= concurrency; i++ {
 
 		go func(i int) {
-			reqId := "req"+strconv.Itoa(i)
+			reqId := "req" + strconv.Itoa(i)
 
 			//  start waiting
 			data, err := Wait(reqId, timeout)
@@ -45,12 +45,12 @@ func TestReqWait_Wait(t *testing.T) {
 		}(i)
 	}
 
-	for i:=1; i<=concurrency; i++ {
-		reqId := "req"+strconv.Itoa(i)
+	for i := 1; i <= concurrency; i++ {
+		reqId := "req" + strconv.Itoa(i)
 
 		// mock Msg
 		dao := &mockAsyncDTO{
-			AsyncFlowContext: &AsyncFlowContext{
+			AsyncFacadeContext: &AsyncFacadeContext{
 				RollbackTopic: "rollback",
 				RequestID:     reqId,
 				CurrentIndex:  0,
@@ -69,15 +69,14 @@ func TestReqWait_Wait_Timeout(t *testing.T) {
 
 	var wg sync.WaitGroup
 	var errCount int
-	var timeout = 1*time.Second
-	var mockTimeout = 2*time.Second
+	var timeout = 1 * time.Second
+	var mockTimeout = 2 * time.Second
 	wg.Add(10)
 
-
-	for i:= 1;i<=10 ;i++ {
+	for i := 1; i <= 10; i++ {
 
 		go func(i int) {
-			reqId := "req"+strconv.Itoa(i)
+			reqId := "req" + strconv.Itoa(i)
 			//  start waiting
 			_, err := Wait(reqId, timeout)
 			if err != nil {
@@ -89,12 +88,12 @@ func TestReqWait_Wait_Timeout(t *testing.T) {
 		}(i)
 	}
 
-	for i:=1; i<=5; i++ {
+	for i := 1; i <= 5; i++ {
 		TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
 	}
 	// mock timeout
 	time.Sleep(mockTimeout)
-	for i:=6; i<=10; i++ {
+	for i := 6; i <= 10; i++ {
 		TaskFinished("req"+strconv.Itoa(i), &mockAsyncDTO{})
 	}
 

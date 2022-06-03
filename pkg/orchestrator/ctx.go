@@ -1,9 +1,13 @@
-package ctx
+package orchestrator
 
 import (
+	"orchestrator/pkg/helper"
 	"sync"
 	"time"
 )
+
+const pbReqCtxKey = "ProtobufRequestContextKey"
+const pbRespCtxKey = "ProtobufResponseContextKey"
 
 type Context struct {
 	// This mutex protect Keys map
@@ -12,8 +16,6 @@ type Context struct {
 	// Keys is a key/value pair exclusively for the context of each request.
 	Keys map[string]interface{}
 }
-
-
 
 // Deadline always returns that there is no deadline (ok==false),
 // maybe you want to use Request.Context().Deadline() instead.
@@ -46,8 +48,6 @@ func (c *Context) Value(key interface{}) interface{} {
 	}
 	return nil
 }
-
-
 
 /************************************/
 /******** METADATA MANAGEMENT********/
@@ -160,4 +160,26 @@ func (c *Context) GetStringMapString(key string) (sms map[string]string) {
 		sms, _ = val.(map[string]string)
 	}
 	return
+}
+
+func (c *Context) setPbReq(req interface{}) {
+	c.Set(pbReqCtxKey, req)
+}
+
+func (c *Context) LoadPbReq(pbReq interface{}) {
+	req, exist := c.Get(pbReqCtxKey)
+	if exist {
+		helper.StructAssign(pbReq, req)
+	}
+}
+
+func (c *Context) SetPbResp(resp interface{}) {
+	c.Set(pbRespCtxKey, resp)
+}
+
+func (c *Context) LoadPbResp(pbResp interface{}) {
+	req, exist := c.Get(pbRespCtxKey)
+	if exist {
+		helper.StructAssign(pbResp, req)
+	}
 }

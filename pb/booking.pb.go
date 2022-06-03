@@ -27,11 +27,11 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type BookingRequest struct {
-	// 產品ID
+	// Product ID
 	ProductID int64 `protobuf:"varint,1,opt,name=ProductID,proto3" json:"ProductID,omitempty"`
-	// 數量
+	// Count
 	Count int64 `protobuf:"varint,2,opt,name=Count,proto3" json:"Count,omitempty"`
-	// 注入錯誤: 測試 Rollback
+	// Fault Injection for testing rollback
 	FaultInject          bool     `protobuf:"varint,3,opt,name=FaultInject,proto3" json:"FaultInject,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -93,14 +93,12 @@ func (m *BookingRequest) GetFaultInject() bool {
 }
 
 type BookingSyncResponse struct {
-	// 請求編號
+	// Request ID
 	RequestID string `protobuf:"bytes,1,opt,name=RequestID,proto3" json:"RequestID,omitempty"`
-	// 產品ID
+	// Order ID: Given by order service
 	OrderID int64 `protobuf:"varint,2,opt,name=OrderID,proto3" json:"OrderID,omitempty"`
-	// 付款ID
-	PaymentID int64 `protobuf:"varint,3,opt,name=PaymentID,proto3" json:"PaymentID,omitempty"`
-	// 注入錯誤: 測試 Rollback
-	FaultInject          bool     `protobuf:"varint,4,opt,name=FaultInject,proto3" json:"FaultInject,omitempty"`
+	// Payment ID: Given by payment service
+	PaymentID            int64    `protobuf:"varint,3,opt,name=PaymentID,proto3" json:"PaymentID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -160,18 +158,10 @@ func (m *BookingSyncResponse) GetPaymentID() int64 {
 	return 0
 }
 
-func (m *BookingSyncResponse) GetFaultInject() bool {
-	if m != nil {
-		return m.FaultInject
-	}
-	return false
-}
-
+// BookingASyncResponse will response immediately, request will be handled in background
 type BookingASyncResponse struct {
-	// 請求編號
-	RequestID string `protobuf:"bytes,1,opt,name=RequestID,proto3" json:"RequestID,omitempty"`
-	// 注入錯誤: 測試 Rollback
-	FaultInject          bool     `protobuf:"varint,2,opt,name=FaultInject,proto3" json:"FaultInject,omitempty"`
+	// Request ID
+	RequestID            string   `protobuf:"bytes,1,opt,name=RequestID,proto3" json:"RequestID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -217,13 +207,6 @@ func (m *BookingASyncResponse) GetRequestID() string {
 	return ""
 }
 
-func (m *BookingASyncResponse) GetFaultInject() bool {
-	if m != nil {
-		return m.FaultInject
-	}
-	return false
-}
-
 func init() {
 	proto.RegisterType((*BookingRequest)(nil), "pb.BookingRequest")
 	proto.RegisterType((*BookingSyncResponse)(nil), "pb.BookingSyncResponse")
@@ -233,26 +216,24 @@ func init() {
 func init() { proto.RegisterFile("pb/booking.proto", fileDescriptor_f9c2a95a0d25f4f8) }
 
 var fileDescriptor_f9c2a95a0d25f4f8 = []byte{
-	// 298 bytes of a gzipped FileDescriptorProto
+	// 268 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x28, 0x48, 0xd2, 0x4f,
 	0xca, 0xcf, 0xcf, 0xce, 0xcc, 0x4b, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48,
 	0x52, 0x4a, 0xe3, 0xe2, 0x73, 0x82, 0x08, 0x06, 0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x08, 0xc9,
 	0x70, 0x71, 0x06, 0x14, 0xe5, 0xa7, 0x94, 0x26, 0x97, 0x78, 0xba, 0x48, 0x30, 0x2a, 0x30, 0x6a,
 	0x30, 0x07, 0x21, 0x04, 0x84, 0x44, 0xb8, 0x58, 0x9d, 0xf3, 0x4b, 0xf3, 0x4a, 0x24, 0x98, 0xc0,
 	0x32, 0x10, 0x8e, 0x90, 0x02, 0x17, 0xb7, 0x5b, 0x62, 0x69, 0x4e, 0x89, 0x67, 0x5e, 0x56, 0x6a,
-	0x72, 0x89, 0x04, 0xb3, 0x02, 0xa3, 0x06, 0x47, 0x10, 0xb2, 0x90, 0x52, 0x2f, 0x23, 0x97, 0x30,
-	0xd4, 0xa2, 0xe0, 0xca, 0xbc, 0xe4, 0xa0, 0xd4, 0xe2, 0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x90, 0x6d,
-	0x50, 0x8b, 0xa1, 0xb6, 0x71, 0x06, 0x21, 0x04, 0x84, 0x24, 0xb8, 0xd8, 0xfd, 0x8b, 0x52, 0x52,
-	0x8b, 0x3c, 0x5d, 0xa0, 0xf6, 0xc1, 0xb8, 0x60, 0x57, 0x26, 0x56, 0xe6, 0xa6, 0xe6, 0x81, 0xf4,
-	0x31, 0x43, 0x5d, 0x09, 0x13, 0x40, 0x77, 0x0f, 0x0b, 0xa6, 0x7b, 0xc2, 0xb8, 0x44, 0xa0, 0xce,
-	0x71, 0x24, 0xc1, 0x3d, 0x68, 0xe6, 0x32, 0x61, 0x98, 0x6b, 0x74, 0x8f, 0x11, 0x1e, 0xa0, 0xc1,
-	0xa9, 0x45, 0x65, 0x99, 0xc9, 0xa9, 0x42, 0x0e, 0x5c, 0x82, 0x1e, 0x89, 0x79, 0x29, 0x39, 0xa9,
-	0x20, 0x8b, 0xa0, 0x72, 0x42, 0x42, 0x7a, 0x05, 0x49, 0x7a, 0xa8, 0x21, 0x2f, 0x25, 0x8e, 0x24,
-	0x86, 0xe2, 0x28, 0x27, 0x2e, 0x21, 0x88, 0x09, 0x8e, 0xc5, 0x04, 0x8c, 0x90, 0x40, 0x12, 0x43,
-	0xf5, 0x98, 0x1b, 0x97, 0x38, 0xc4, 0x8c, 0x90, 0x8c, 0xa2, 0xfc, 0x92, 0x92, 0x9c, 0xcc, 0xbc,
-	0x74, 0x72, 0xdc, 0xe2, 0x24, 0x70, 0xe2, 0x91, 0x1c, 0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e,
-	0xc9, 0x31, 0xce, 0x78, 0x2c, 0xc7, 0x90, 0xc4, 0x06, 0x4e, 0x4d, 0xc6, 0x80, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0x90, 0x1a, 0xca, 0x0d, 0x61, 0x02, 0x00, 0x00,
+	0x72, 0x89, 0x04, 0xb3, 0x02, 0xa3, 0x06, 0x47, 0x10, 0xb2, 0x90, 0x52, 0x36, 0x97, 0x30, 0xd4,
+	0x9e, 0xe0, 0xca, 0xbc, 0xe4, 0xa0, 0xd4, 0xe2, 0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x90, 0x65, 0x50,
+	0x7b, 0xa1, 0x96, 0x71, 0x06, 0x21, 0x04, 0x84, 0x24, 0xb8, 0xd8, 0xfd, 0x8b, 0x52, 0x52, 0x8b,
+	0x3c, 0x5d, 0xa0, 0xd6, 0xc1, 0xb8, 0x60, 0x47, 0x26, 0x56, 0xe6, 0xa6, 0xe6, 0x81, 0xf4, 0x31,
+	0x43, 0x1d, 0x09, 0x13, 0x50, 0x32, 0xe1, 0x12, 0x81, 0x5a, 0xe6, 0x48, 0xbc, 0x6d, 0x46, 0xd3,
+	0x18, 0xe1, 0x61, 0x11, 0x9c, 0x5a, 0x54, 0x96, 0x99, 0x9c, 0x2a, 0xe4, 0xc0, 0x25, 0xe8, 0x91,
+	0x98, 0x97, 0x92, 0x93, 0x0a, 0x32, 0x06, 0x2a, 0x27, 0x24, 0xa4, 0x57, 0x90, 0xa4, 0x87, 0x1a,
+	0x68, 0x52, 0xe2, 0x48, 0x62, 0x28, 0x56, 0x3a, 0x71, 0x09, 0x41, 0x4c, 0x70, 0x2c, 0x26, 0x60,
+	0x84, 0x04, 0x92, 0x18, 0x8a, 0xb3, 0x9d, 0x04, 0x4e, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e,
+	0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x19, 0x8f, 0xe5, 0x18, 0x92, 0xd8, 0xc0, 0x11, 0x68, 0x0c, 0x08,
+	0x00, 0x00, 0xff, 0xff, 0xea, 0xe7, 0x72, 0x76, 0xd4, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -267,12 +248,10 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type BookingServiceClient interface {
-	// 同步的 Booking 請求
+	// Booking facade in sync mode
 	HandleSyncBooking(ctx context.Context, in *BookingRequest, opts ...grpc.CallOption) (*BookingSyncResponse, error)
-	// 異步的 Booking 請求
+	// Booking facade in async mode
 	HandleAsyncBooking(ctx context.Context, in *BookingRequest, opts ...grpc.CallOption) (*BookingASyncResponse, error)
-	// 節流的 Booking 請求
-	HandleThrottlingBooking(ctx context.Context, in *BookingRequest, opts ...grpc.CallOption) (*BookingSyncResponse, error)
 }
 
 type bookingServiceClient struct {
@@ -301,23 +280,12 @@ func (c *bookingServiceClient) HandleAsyncBooking(ctx context.Context, in *Booki
 	return out, nil
 }
 
-func (c *bookingServiceClient) HandleThrottlingBooking(ctx context.Context, in *BookingRequest, opts ...grpc.CallOption) (*BookingSyncResponse, error) {
-	out := new(BookingSyncResponse)
-	err := c.cc.Invoke(ctx, "/pb.BookingService/HandleThrottlingBooking", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // BookingServiceServer is the server API for BookingService service.
 type BookingServiceServer interface {
-	// 同步的 Booking 請求
+	// Booking facade in sync mode
 	HandleSyncBooking(context.Context, *BookingRequest) (*BookingSyncResponse, error)
-	// 異步的 Booking 請求
+	// Booking facade in async mode
 	HandleAsyncBooking(context.Context, *BookingRequest) (*BookingASyncResponse, error)
-	// 節流的 Booking 請求
-	HandleThrottlingBooking(context.Context, *BookingRequest) (*BookingSyncResponse, error)
 }
 
 // UnimplementedBookingServiceServer can be embedded to have forward compatible implementations.
@@ -329,9 +297,6 @@ func (*UnimplementedBookingServiceServer) HandleSyncBooking(ctx context.Context,
 }
 func (*UnimplementedBookingServiceServer) HandleAsyncBooking(ctx context.Context, req *BookingRequest) (*BookingASyncResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HandleAsyncBooking not implemented")
-}
-func (*UnimplementedBookingServiceServer) HandleThrottlingBooking(ctx context.Context, req *BookingRequest) (*BookingSyncResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HandleThrottlingBooking not implemented")
 }
 
 func RegisterBookingServiceServer(s *grpc.Server, srv BookingServiceServer) {
@@ -374,24 +339,6 @@ func _BookingService_HandleAsyncBooking_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BookingService_HandleThrottlingBooking_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BookingRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BookingServiceServer).HandleThrottlingBooking(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.BookingService/HandleThrottlingBooking",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BookingServiceServer).HandleThrottlingBooking(ctx, req.(*BookingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _BookingService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "pb.BookingService",
 	HandlerType: (*BookingServiceServer)(nil),
@@ -403,10 +350,6 @@ var _BookingService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HandleAsyncBooking",
 			Handler:    _BookingService_HandleAsyncBooking_Handler,
-		},
-		{
-			MethodName: "HandleThrottlingBooking",
-			Handler:    _BookingService_HandleThrottlingBooking_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -484,16 +427,6 @@ func (m *BookingSyncResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if m.FaultInject {
-		i--
-		if m.FaultInject {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x20
-	}
 	if m.PaymentID != 0 {
 		i = encodeVarintBooking(dAtA, i, uint64(m.PaymentID))
 		i--
@@ -537,16 +470,6 @@ func (m *BookingASyncResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.XXX_unrecognized != nil {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.FaultInject {
-		i--
-		if m.FaultInject {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x10
 	}
 	if len(m.RequestID) > 0 {
 		i -= len(m.RequestID)
@@ -606,9 +529,6 @@ func (m *BookingSyncResponse) Size() (n int) {
 	if m.PaymentID != 0 {
 		n += 1 + sovBooking(uint64(m.PaymentID))
 	}
-	if m.FaultInject {
-		n += 2
-	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -624,9 +544,6 @@ func (m *BookingASyncResponse) Size() (n int) {
 	l = len(m.RequestID)
 	if l > 0 {
 		n += 1 + l + sovBooking(uint64(l))
-	}
-	if m.FaultInject {
-		n += 2
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -733,10 +650,7 @@ func (m *BookingRequest) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthBooking
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthBooking
 			}
 			if (iNdEx + skippy) > l {
@@ -851,36 +765,13 @@ func (m *BookingSyncResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FaultInject", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBooking
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.FaultInject = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipBooking(dAtA[iNdEx:])
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthBooking
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthBooking
 			}
 			if (iNdEx + skippy) > l {
@@ -957,36 +848,13 @@ func (m *BookingASyncResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.RequestID = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FaultInject", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBooking
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.FaultInject = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipBooking(dAtA[iNdEx:])
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthBooking
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthBooking
 			}
 			if (iNdEx + skippy) > l {

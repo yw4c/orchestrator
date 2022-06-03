@@ -7,88 +7,58 @@ import (
 )
 
 const (
-	AsyncBooking orchestrator.Facade = "AsyncBooking"
-	SyncBooking  = "SyncBooking"
-	ThrottlingBooking  = "ThrottlingBooking"
+	AsyncBooking orchestrator.FacadeName = "AsyncBooking"
+	SyncBooking  orchestrator.FacadeName = "SyncBooking"
 )
 
+// RegisterAsyncBookingFacade
+func RegisterAsyncBookingFacade() {
 
-// 註冊異步的 Booking 事務流程
-func RegisterAsyncBookingFlows() {
-
-	// 建立訂單
+	// First node: Create order
 	createOrderPair := orchestrator.TopicNodePair{
 		Topic:     topic.CreateOrder,
-		AsyncNode: node.CreateOrderAsync(),
+		AsyncNode: node.CreateOrderAsyncNode(),
 	}
-	// 建立付款單
+	// Second node: Create payment
 	createPaymentPair := orchestrator.TopicNodePair{
 		Topic:     topic.CreatePayment,
-		AsyncNode: node.CreatePaymentAsync(),
+		AsyncNode: node.CreatePaymentAsyncNode(),
 	}
-	// Rollback
+	// Setup Rollback
 	rollbackPair := &orchestrator.TopicRollbackNodePair{
 		Topic: topic.CancelAsyncBooking,
 		Node:  node.CancelBooking(),
 	}
 
-	// 建立流程
-	flow := orchestrator.NewAsyncFlow(topic.CancelAsyncBooking)
-	flow.Use(createOrderPair)
-	flow.Use(createPaymentPair)
+	// Wrap nodes in facade
+	facade := orchestrator.NewAsyncFacade(topic.CancelAsyncBooking)
+	facade.Use(createOrderPair)
+	facade.Use(createPaymentPair)
 
-	// 開始監聽異步事務 Topic
-	flow.Consume()
-	// 開始監聽 rollback topic
-	flow.ConsumeRollback(rollbackPair)
+	// Start consume topics of nodes
+	facade.Consume()
+	// Start consume rollback topic
+	facade.ConsumeRollback(rollbackPair)
 
-	// 註冊流程
-	orchestrator.GetInstance().SetAsyncFlows(AsyncBooking, flow)
+	// Register facade
+	orchestrator.GetInstance().RegisterAsyncFacade(AsyncBooking, facade)
 
 }
 
-// 註冊同步的 Booking 事務流程
-func RegisterSyncBookingFlow() {
-	// 建立流程
-	flow := orchestrator.NewSyncFlow()
-	flow.Use(node.CreateOrderSync()).
-		Use(node.CreatePaymentSync())
+// RegisterSyncBookingFacade
+func RegisterSyncBookingFacade() {
+	// Create facade and register nodes.
+	flow := orchestrator.NewSyncFacade()
+	flow.Use(node.CreateOrderSyncNode()).
+		Use(node.CreatePaymentSyncNode())
 
-	// 開始監聽 rollback Topic
+	// Start consume rollback Topic
 	rollbackPair := &orchestrator.TopicRollbackNodePair{
 		Topic: topic.CancelSyncBooking,
 		Node:  node.CancelBooking(),
 	}
 	flow.ConsumeRollback(rollbackPair)
 
-	// 註冊流程
-	orchestrator.GetInstance().SetSyncFlows(SyncBooking, flow)
-}
-
-func RegisterThrottlingBookingFlow()  {
-
-	// 建立訂單
-	createOrderPair := orchestrator.TopicNodePair{
-		Topic:     topic.CreateOrderThrottling,
-		AsyncNode: node.CreateOrderAsync(),
-	}
-	// 建立付款單
-	createPaymentPair := orchestrator.TopicNodePair{
-		Topic:     topic.CreatePaymentThrottling,
-		AsyncNode: node.CreatePaymentAsync(),
-	}
-	// Rollback
-	rollbackPair := &orchestrator.TopicRollbackNodePair{
-		Topic: topic.CancelAsyncBooking,
-		Node:  node.CancelBooking(),
-	}
-
-	flow := orchestrator.NewThrottlingFlow(topic.CancelThrottlingBooking)
-	flow.Use(createOrderPair)
-	flow.Use(createPaymentPair)
-	flow.ConsumeRollback(rollbackPair)
-	flow.Consume()
-
-	orchestrator.GetInstance().SetThrottlingFlows(ThrottlingBooking, flow)
-
+	// register facade
+	orchestrator.GetInstance().RegisterSyncFacade(SyncBooking, flow)
 }

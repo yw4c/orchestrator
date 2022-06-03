@@ -6,20 +6,21 @@ import (
 	"orchestrator/pkg/pkgerror"
 	"time"
 )
+
 const throttlingTimeout = 180
 
 // 節流的事務流程
-type IThrottlingFlow interface {
+type IThrottlingFacade interface {
 	// 將䩞點依序加入
-	Use(TopicNodePair TopicNodePair) IAsyncFlow
+	Use(TopicNodePair TopicNodePair) IAsyncFacade
 	// 執行事務流程
-	Run(requestID string,  requestParam IAsyncFlowContext)(response interface{}, err error)
-	IFlow
+	Run(requestID string, requestParam IAsyncFlowContext) (response interface{}, err error)
+	IFacade
 }
 
 func NewThrottlingFlow(rollbackTopic Topic) *ThrottlingFlow {
 	return &ThrottlingFlow{
-		AsyncFlow: &AsyncFlow{
+		AsyncFacade: &AsyncFacade{
 			pairs:         nil,
 			rollbackTopic: rollbackTopic,
 		},
@@ -27,7 +28,7 @@ func NewThrottlingFlow(rollbackTopic Topic) *ThrottlingFlow {
 }
 
 type ThrottlingFlow struct {
-	*AsyncFlow
+	*AsyncFacade
 }
 
 func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (response interface{}, err error) {
@@ -47,10 +48,9 @@ func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (
 	requestParam.SetTopics(topics)
 	requestParam.SetRollbackTopic(t.rollbackTopic)
 
-
 	data, err := json.Marshal(requestParam)
 	if err != nil {
-		return  nil, eris.Wrap(pkgerror.ErrInternalError, "Json Marshal Fail")
+		return nil, eris.Wrap(pkgerror.ErrInternalError, "Json Marshal Fail")
 	}
 
 	// 開始推播給第一個事務
@@ -59,5 +59,3 @@ func (t *ThrottlingFlow) Run(requestID string, requestParam IAsyncFlowContext) (
 	return
 
 }
-
-

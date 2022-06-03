@@ -4,85 +4,81 @@ import (
 	"sync"
 )
 
-// 協調者
 type IOrchestrator interface {
-	// 註冊事務流程
-	SetSyncFlows(facade Facade, flow ISyncFlow)
-	SetAsyncFlows(facade Facade, flow IAsyncFlow)
-	SetThrottlingFlows(facade Facade, flow IThrottlingFlow)
-	// 用 facade 領取事務流程
-	GetSyncFlow(facade Facade) ISyncFlow
-	GetAsyncFlow(facade Facade) IAsyncFlow
-	GetThrottlingFlows(facade Facade) IThrottlingFlow
+	RegisterSyncFacade(name FacadeName, facade ISyncFacade)
+	RegisterAsyncFacade(name FacadeName, facade IAsyncFacade)
+	RegisterThrottlingFacade(name FacadeName, facade IThrottlingFacade)
+	GetSyncFacade(name FacadeName) ISyncFacade
+	GetAsyncFacade(name FacadeName) IAsyncFacade
+	GetThrottlingFacade(name FacadeName) IThrottlingFacade
 }
 
-// 用 facade 領取事務流程
-type Facade string
+type FacadeName string
 
-type IFlow interface {
-	// 開始準備接收 MQ 訊息
+type IFacade interface {
+	// Start rollback consumer
 	ConsumeRollback(rollback *TopicRollbackNodePair)
 }
 
 // Singleton
 var instance IOrchestrator
 var once sync.Once
+
 func GetInstance() IOrchestrator {
 	once.Do(func() {
-		c:= &Orchestrator{
-			registeredSyncFlows: make(map[Facade]ISyncFlow),
-			registeredAsyncFlows: make(map[Facade]IAsyncFlow),
-			registeredThrottlingFlows: make(map[Facade]IThrottlingFlow),
+		c := &Orchestrator{
+			registeredSyncFlows:       make(map[FacadeName]ISyncFacade),
+			registeredAsyncFlows:      make(map[FacadeName]IAsyncFacade),
+			registeredThrottlingFlows: make(map[FacadeName]IThrottlingFacade),
 		}
 		instance = c
 	})
 	return instance
 }
 
-
 type Orchestrator struct {
-	registeredSyncFlows map[Facade]ISyncFlow
-	syncFlowMu          sync.RWMutex
-	registeredAsyncFlows map[Facade]IAsyncFlow
-	asyncFlowMu          sync.RWMutex
-	registeredThrottlingFlows map[Facade]IThrottlingFlow
-	throttlingFlowMu sync.RWMutex
+	registeredSyncFlows       map[FacadeName]ISyncFacade
+	syncFlowMu                sync.RWMutex
+	registeredAsyncFlows      map[FacadeName]IAsyncFacade
+	asyncFlowMu               sync.RWMutex
+	registeredThrottlingFlows map[FacadeName]IThrottlingFacade
+	throttlingFlowMu          sync.RWMutex
 }
 
-func (o *Orchestrator) SetAsyncFlows(facade Facade, flow IAsyncFlow) {
+func (o *Orchestrator) RegisterAsyncFacade(name FacadeName, facade IAsyncFacade) {
 	o.asyncFlowMu.Lock()
-	o.registeredAsyncFlows[facade] = flow
+	o.registeredAsyncFlows[name] = facade
 	o.asyncFlowMu.Unlock()
 }
 
-func (o *Orchestrator) GetAsyncFlow(facade Facade) IAsyncFlow {
-	if flow, ok := o.registeredAsyncFlows[facade] ; ok {
+func (o *Orchestrator) GetAsyncFacade(name FacadeName) IAsyncFacade {
+	if flow, ok := o.registeredAsyncFlows[name]; ok {
 		return flow
 	}
 	return nil
 }
 
-func (o *Orchestrator) SetSyncFlows(facade Facade, flow ISyncFlow) {
+func (o *Orchestrator) RegisterSyncFacade(name FacadeName, facade ISyncFacade) {
 	o.syncFlowMu.Lock()
-	o.registeredSyncFlows[facade] = flow
+	o.registeredSyncFlows[name] = facade
 	o.syncFlowMu.Unlock()
 }
 
-func (o *Orchestrator) GetSyncFlow(facade Facade) ISyncFlow {
-	if flow, ok := o.registeredSyncFlows[facade] ; ok {
+func (o *Orchestrator) GetSyncFacade(name FacadeName) ISyncFacade {
+	if flow, ok := o.registeredSyncFlows[name]; ok {
 		return flow
 	}
 	return nil
 }
 
-func (o *Orchestrator) SetThrottlingFlows(facade Facade, flow IThrottlingFlow) {
+func (o *Orchestrator) RegisterThrottlingFacade(name FacadeName, facade IThrottlingFacade) {
 	o.throttlingFlowMu.Lock()
-	o.registeredThrottlingFlows[facade] = flow
+	o.registeredThrottlingFlows[name] = facade
 	o.throttlingFlowMu.Unlock()
 }
 
-func (o *Orchestrator) GetThrottlingFlows(facade Facade) IThrottlingFlow {
-	if flow, ok := o.registeredThrottlingFlows[facade] ; ok {
+func (o *Orchestrator) GetThrottlingFacade(name FacadeName) IThrottlingFacade {
+	if flow, ok := o.registeredThrottlingFlows[name]; ok {
 		return flow
 	}
 	return nil

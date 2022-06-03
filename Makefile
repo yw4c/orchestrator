@@ -15,3 +15,6 @@ update_image:
 deploy-dev:
 	kustomize build ./deployment/k8s/dev | kubectl apply -f - -n orchestrator
 
+static:
+	go fmt `go list ./... | grep -v ./vendor/...`
+	go vet `go list ./... | grep -v ./vendor/...`

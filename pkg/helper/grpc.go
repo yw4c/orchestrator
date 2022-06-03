@@ -7,7 +7,7 @@ import (
 	"orchestrator/pkg/pkgerror"
 )
 
-func GetRequestID(ctx context.Context) (string, error){
+func GetRequestID(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", eris.Wrap(pkgerror.ErrInternalServerError, "Read Metadata Fail")

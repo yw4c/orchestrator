@@ -1,19 +1,17 @@
 package config
 
 type config struct {
-	//  產品環境 <dev,sit,prod>
+	// Env dev,sit,prod
 	Env     string
 	IsDebug bool `mapstructure:"is_debug"`
-	// app 對外服務
+
 	Server struct {
-		// gRPC
 		Grpc struct {
 			Port string
 		}
 	}
-	// 抽換服務
 	Engine struct {
-		// message queue 選用 <rabbit_mq, nats>
+		// MessageQueue <rabbit_mq, nats>
 		MessageQueue string `mapstructure:"message_queue"`
 	}
 	// Message Queue Topics
@@ -22,7 +20,6 @@ type config struct {
 		Topics      []Topic
 	} `mapstructure:"message_queue"`
 
-	// app 連線對象
 	Client struct {
 		Redis    Redis
 		RabbitMQ RabbitMQ `mapstructure:"rabbit_mq"`
@@ -37,11 +34,10 @@ type config struct {
 }
 
 type Topic struct {
-	// mq server 註冊的 topic 名稱
 	IsThrottling bool `mapstructure:"is_throttling"`
 	// unique name
 	ID string `mapstructure:"id"`
-	// 接收的併發數
+	// Count of concurrency
 	Concurrency int
 }
 

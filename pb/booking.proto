@@ -4,42 +4,33 @@ package pb;
 
 service BookingService {
 
-  // 表頭(Metadata)需要請求編號
-  // e.g. grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleAsyncBooking
-
-  // 同步的 Booking 請求
+  // Booking facade in sync mode
   rpc HandleSyncBooking (BookingRequest) returns (BookingSyncResponse);
-  // 異步的 Booking 請求
+  // Booking facade in async mode
   rpc HandleAsyncBooking (BookingRequest) returns (BookingASyncResponse);
-  // 節流的 Booking 請求
-  rpc HandleThrottlingBooking (BookingRequest) returns (BookingSyncResponse);
 }
 
 
 message BookingRequest{
-  // 產品ID
+  // Product ID
   int64 ProductID = 1;
-  // 數量
+  // Count
   int64 Count = 2;
-  // 注入錯誤: 測試 Rollback
+  // Fault Injection for testing rollback
   bool FaultInject = 3;
 }
 
 message BookingSyncResponse{
-  // 請求編號
+  // Request ID
   string RequestID = 1;
-  // 產品ID
+  // Order ID: Given by order service
   int64 OrderID = 2;
-  // 付款ID
+  // Payment ID: Given by payment service
   int64 PaymentID =3;
-  // 注入錯誤: 測試 Rollback
-  bool FaultInject = 4;
 }
 
-
+// BookingASyncResponse will response immediately, request will be handled in background
 message BookingASyncResponse{
-  // 請求編號
+  // Request ID
   string RequestID = 1;
-  // 注入錯誤: 測試 Rollback
-  bool FaultInject = 2;
 }
