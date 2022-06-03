@@ -47,17 +47,17 @@ Here we have an example of e-commerce booking endpoint.
     ```
 
 ### Invoke Async Booking Facade
-       * Request
-       ```shell script
-        grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleAsyncBooking
-       ```
-        
-       * Response: Jobs will be handled in background.
-       ```json
-        {
-          "RequestID": "example-request-id"
-        }
-       ```
+* Request
+    ```shell script
+    grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleAsyncBooking
+    ```
+
+* Response: Jobs will be handled in background.
+    ```json
+    {
+      "RequestID": "example-request-id"
+    }
+    ```
 
 ## Development Guide
 
@@ -114,7 +114,7 @@ Here we have an example of e-commerce booking endpoint.
     }
     ```
   
-    ##### 3. invoke facade.Run() in concurrency in ./handler
+    ##### 3. invoke facade.Run() in ./handler
     ```go
     facade := orchestrator.GetInstance().GetSyncFacade(facade.SyncBooking)
     err = facade.Run(requestID, reqMsg)
@@ -140,7 +140,7 @@ Here we have an example of e-commerce booking endpoint.
 
     ##### 2. Declare nodes in ./node
     * Args
-        * next() Going to next node
+        * next() Iterate next node
         * rollback() cancel flow while error happened
     ```go
     func CreateOrderAsyncNode() orchestrator.AsyncNode {
@@ -194,7 +194,7 @@ Here we have an example of e-commerce booking endpoint.
     }
     ```
 
-    ##### 4. invoke facade.Run() in concurrency in ./handler
+    ##### 4. invoke facade.Run() in ./handler
     ```go
     facade := orchestrator.GetInstance().GetAsyncFacade(facade.AsyncBooking)
     err = facade.Run(requestID, reqMsg)
