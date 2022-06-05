@@ -1,7 +1,7 @@
 # Orchestrator Framework of Saga pattern
 * Orchestrator is a solution of distributed transaction in microservices. 
 * It implements saga pattern and facade pattern. All invoked services just needs to maintain the endpoints.
-* Facades support: Sync Flow, Async Flow(Event driven).
+* Facades support: Sync Flow, Async Flow(via MQ).
 
 ## Contents
 
@@ -46,19 +46,6 @@ Here we have an example of e-commerce booking endpoint.
     }
     ```
 
-### Invoke Async Booking Facade
-* Request
-    ```shell script
-    grpcurl -rpc-header x-request-id:example-request-id -plaintext -d '{"ProductID": "1", "FaultInject": "false"}' localhost:10000 pb.BookingService/HandleAsyncBooking
-    ```
-
-* Response: Jobs will be handled in background.
-    ```json
-    {
-      "RequestID": "example-request-id"
-    }
-    ```
-
 ## Development Guide
 
 ### Structure
@@ -67,7 +54,10 @@ Here we have an example of e-commerce booking endpoint.
 ├── facade: Register Sync/Async facades. A facade is combined by several nodes.  
 ├── node: Node invokes specific upstream endpoint.
 ├── handler: Implements protobuf gRPC ServiceServer interface
-├── topic: Register Message Queue Topics
+├── topic: Register Message Queue Topics.
+├── pb: Protobuf file and genarated code.
+├── pkg: Core of framework.
+├── dto: Message payload of MQ.
 ````
 ### Steps
 
@@ -159,6 +149,7 @@ Here we have an example of e-commerce booking endpoint.
     ##### 3. Declare facade with nodes in ./facade
     * Bind Node with mapping topic.
     * Invoke AsyncFacade.Use() registering nodes in order
+    * invoke register fun when initialization
     ```go
     func RegisterAsyncBookingFacade() {
     

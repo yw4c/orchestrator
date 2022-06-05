@@ -14,8 +14,4 @@ const (
 	CreatePayment      = "create_payment"
 	CancelAsyncBooking = "cancel_async_booking"
 
-	// Throttling
-	CreateOrderThrottling   = "create_order_throttling"
-	CreatePaymentThrottling = "create_payment_throttling"
-	CancelThrottlingBooking = "cancel_throttling_booking"
 )

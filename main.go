@@ -7,7 +7,10 @@ import (
 	"orchestrator/facade"
 	"orchestrator/handler"
 	"orchestrator/pb"
+	"os"
+	"os/signal"
 	"runtime/debug"
+	"syscall"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -21,10 +24,9 @@ import (
 func main() {
 	fmt.Println("container initializing ... ")
 
-	// 註冊事務流程
+	// register facades
 	facade.RegisterAsyncBookingFacade()
 	facade.RegisterSyncBookingFacade()
-	//facade.RegisterThrottlingBookingFlow()
 
 	// gRPC Connection
 	lis, err := net.Listen("tcp", ":"+config.GetConfigInstance().Server.Grpc.Port)
@@ -39,7 +41,7 @@ func main() {
 			Str("trace", string(debug.Stack())).
 			Msg("GRPC Recover")
 
-		return status.Errorf(codes.Unknown, "[p010user] panic recovered: %v", p)
+		return status.Errorf(codes.Unknown, "panic recovered: %v", p)
 	}
 	opts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandler(customFunc),
@@ -69,5 +71,8 @@ func main() {
 	log.Info().Msg("gRPC Server Started ")
 	fmt.Println("container is ready ")
 
-	select {}
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	<-quit
+	log.Info().Msg("Shutting down server...")
 }
